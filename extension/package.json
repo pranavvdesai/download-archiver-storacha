@@ -1,0 +1,20 @@
+{
+  "name": "extension",
+  "version": "1.0.0",
+  "main": "background.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "esbuild background.js --bundle --platform=browser --format=esm --define:process.env={} --outfile=dist/background.js --minify"
+  },
+  "keywords": [],
+  "author": "Pranav Desai",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@ipld/dag-ucan": "^3.4.5",
+    "@ucanto/client": "^9.0.1",
+    "@web3-storage/w3up-client": "^17.3.0",
+    "buffer": "^6.0.3",
+    "esbuild": "^0.25.6"
+  }
+}

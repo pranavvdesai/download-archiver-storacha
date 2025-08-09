@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DownloadArchiver Options</title>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    label { display: block; margin-top: 1rem; }
+    input { width: 100%; padding: .5rem; margin-top: .25rem; }
+    button { margin-top: 1rem; padding: .5rem 1rem; }
+    #status { margin-top: 1rem; color: green; }
+  </style>
+</head>
+<body>
+  <h1>DownloadArchiver Settings</h1>
+  <label>
+    Your Email
+    <input type="email" id="email" placeholder="you@example.com" required />
+  </label>
+  <h2>Upload Rules</h2>
+<label>
+  File types to include (comma-separated, e.g. jpg,png,pdf):
+  <input type="text" id="types" placeholder="jpg,png,txt" />
+</label>
+<label>
+  Maximum file size (MB):
+  <input type="number" id="maxSize" placeholder="10" />
+</label>
+<label>
+  Only watch these folders (comma-separated paths):
+  <input type="text" id="folders" placeholder="Downloads,Documents" />
+</label>
+
+ <button id="save">Save & Connect</button>
+  <div id="status"></div>
+
+  <script src="options.js"></script>
+</body>
+</html>
