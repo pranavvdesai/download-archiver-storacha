@@ -7,17 +7,202 @@ import * as Delegation from "@ucanto/core/delegation";
 let client;
 let spaceDid;
 
-let uploadRules = { types: [], maxSize: Infinity, folders: [] };
-chrome.storage.local.get("rules").then((r) => {
-  if (r.rules) {
-    uploadRules = r.rules;
-    console.log("[DownloadArchiver] Initial rules:", uploadRules);
+// Rule Engine v2 - Same implementation as in options.js
+class RuleEngine {
+  constructor() {
+    this.mimeTypeMap = {
+      pdf: "application/pdf",
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      png: "image/png",
+      gif: "image/gif",
+      txt: "text/plain",
+      doc: "application/msword",
+      docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      xls: "application/vnd.ms-excel",
+      xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      zip: "application/zip",
+      mp4: "video/mp4",
+      mp3: "audio/mpeg",
+      exe: "application/x-executable",
+      bat: "application/x-bat",
+      tmp: "application/x-temp",
+    };
+  }
+
+  getExtension(filePath) {
+    const match = filePath.match(/\.([^.]+)$/);
+    return match ? match[1].toLowerCase() : "";
+  }
+
+  getMimeType(extension) {
+    return this.mimeTypeMap[extension] || "application/octet-stream";
+  }
+
+  matchesPattern(text, pattern) {
+    if (!pattern) return false;
+    const regexPattern = pattern
+      .replace(/\*/g, ".*")
+      .replace(/\?/g, ".")
+      .replace(/\./g, "\\.");
+    try {
+      const regex = new RegExp(regexPattern, "i");
+      return regex.test(text);
+    } catch (e) {
+      return text.toLowerCase().includes(pattern.toLowerCase());
+    }
+  }
+
+  matchesExtensionList(extension, patterns) {
+    if (!patterns || patterns.length === 0) return false;
+    return patterns.some((pattern) => {
+      pattern = pattern.trim().toLowerCase();
+      if (pattern.startsWith("*.")) {
+        return this.matchesPattern(extension, pattern.substring(2));
+      }
+      return extension === pattern || this.matchesPattern(extension, pattern);
+    });
+  }
+
+  matchesMimeTypeList(mimeType, patterns) {
+    if (!patterns || patterns.length === 0) return false;
+    return patterns.some((pattern) => {
+      pattern = pattern.trim().toLowerCase();
+      if (pattern.endsWith("/*")) {
+        const baseType = pattern.substring(0, pattern.length - 2);
+        return mimeType.toLowerCase().startsWith(baseType);
+      }
+      return mimeType.toLowerCase() === pattern;
+    });
+  }
+
+  matchesFolderList(filePath, patterns) {
+    if (!patterns || patterns.length === 0) return false;
+    return patterns.some((pattern) => {
+      pattern = pattern.trim();
+      return this.matchesPattern(filePath, pattern);
+    });
+  }
+
+  evaluateFile(filePath, fileSizeMB, rules) {
+    const extension = this.getExtension(filePath);
+    const mimeType = this.getMimeType(extension);
+
+    // Step 1: Check DENY rules
+    if (rules.deny) {
+      if (this.matchesExtensionList(extension, rules.deny.extensions)) {
+        return {
+          allowed: false,
+          reason: `Denied by extension rule: ${extension}`,
+        };
+      }
+      if (this.matchesMimeTypeList(mimeType, rules.deny.mimeTypes)) {
+        return {
+          allowed: false,
+          reason: `Denied by MIME type rule: ${mimeType}`,
+        };
+      }
+      if (this.matchesFolderList(filePath, rules.deny.folders)) {
+        return {
+          allowed: false,
+          reason: `Denied by folder rule: path matches deny pattern`,
+        };
+      }
+    }
+
+    // Step 2: Check INCLUDE rules
+    let includeMatch = false;
+    let includeReason = "";
+
+    if (rules.include) {
+      const hasIncludeRules =
+        (rules.include.extensions && rules.include.extensions.length > 0) ||
+        (rules.include.mimeTypes && rules.include.mimeTypes.length > 0) ||
+        (rules.include.folders && rules.include.folders.length > 0);
+
+      if (hasIncludeRules) {
+        if (this.matchesExtensionList(extension, rules.include.extensions)) {
+          includeMatch = true;
+          includeReason = `extension ${extension}`;
+        } else if (
+          this.matchesMimeTypeList(mimeType, rules.include.mimeTypes)
+        ) {
+          includeMatch = true;
+          includeReason = `MIME type ${mimeType}`;
+        } else if (this.matchesFolderList(filePath, rules.include.folders)) {
+          includeMatch = true;
+          includeReason = `folder pattern`;
+        }
+
+        if (!includeMatch) {
+          return { allowed: false, reason: `Not included by any include rule` };
+        }
+      } else {
+        includeMatch = true;
+        includeReason = "no include rules specified";
+      }
+    } else {
+      includeMatch = true;
+      includeReason = "no include rules specified";
+    }
+
+    // Step 3: Check SIZE rules
+    if (rules.size) {
+      if (rules.size.min && fileSizeMB < rules.size.min) {
+        return {
+          allowed: false,
+          reason: `File too small: ${fileSizeMB}MB < ${rules.size.min}MB`,
+        };
+      }
+      if (rules.size.max && fileSizeMB > rules.size.max) {
+        return {
+          allowed: false,
+          reason: `File too large: ${fileSizeMB}MB > ${rules.size.max}MB`,
+        };
+      }
+    }
+
+    return {
+      allowed: true,
+      reason: `Allowed: included by ${includeReason}, size ${fileSizeMB}MB is within limits`,
+    };
+  }
+}
+
+const ruleEngine = new RuleEngine();
+let uploadRules = {
+  include: { extensions: [], mimeTypes: [], folders: [] },
+  deny: { extensions: [], mimeTypes: [], folders: [] },
+  size: { min: null, max: null },
+};
+
+// Load rules from storage (support both v1 and v2 formats)
+chrome.storage.local.get(["rules", "rulesV2"]).then((stored) => {
+  if (stored.rulesV2) {
+    uploadRules = stored.rulesV2;
+    console.log("[DownloadArchiver] Initial rules v2:", uploadRules);
+  } else if (stored.rules) {
+    // Migrate from v1 format
+    uploadRules = {
+      include: {
+        extensions: stored.rules.types || [],
+        mimeTypes: [],
+        folders: stored.rules.folders || [],
+      },
+      deny: { extensions: [], mimeTypes: [], folders: [] },
+      size: {
+        min: null,
+        max: stored.rules.maxSize === Infinity ? null : stored.rules.maxSize,
+      },
+    };
+    console.log("[DownloadArchiver] Migrated rules from v1:", uploadRules);
   }
 });
+
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && changes.rules) {
-    uploadRules = changes.rules.newValue;
-    console.log("[DownloadArchiver] Rules updated:", uploadRules);
+  if (area === "local" && changes.rulesV2) {
+    uploadRules = changes.rulesV2.newValue;
+    console.log("[DownloadArchiver] Rules v2 updated:", uploadRules);
   }
 });
 
@@ -118,18 +303,24 @@ chrome.downloads.onChanged.addListener(async (delta) => {
     const [item] = await chrome.downloads.search({ id: delta.id });
     if (!item || item.byExtension) return;
 
-    const ext = item.filename.split(".").pop().toLowerCase();
-    if (uploadRules.types.length && !uploadRules.types.includes(ext)) return;
-    if (
-      item.fileSize &&
-      item.fileSize > uploadRules.maxSize * 1024 * 1024
-    )
+    // Use Rule Engine v2 for evaluation
+    const fileSizeMB = item.fileSize ? item.fileSize / (1024 * 1024) : 0;
+    const evaluation = ruleEngine.evaluateFile(
+      item.filename,
+      fileSizeMB,
+      uploadRules
+    );
+
+    if (!evaluation.allowed) {
+      console.log(
+        `[DownloadArchiver] Skipping ${item.filename}: ${evaluation.reason}`
+      );
       return;
-    if (
-      uploadRules.folders.length &&
-      !uploadRules.folders.some((f) => item.filename.includes(f))
-    )
-      return;
+    }
+
+    console.log(
+      `[DownloadArchiver] Processing ${item.filename}: ${evaluation.reason}`
+    );
 
     const response = await fetch(item.url);
     const blob = await response.blob();
@@ -138,7 +329,10 @@ chrome.downloads.onChanged.addListener(async (delta) => {
     console.log("[DownloadArchiver] Uploading:", item.filename);
     const cid = await client.uploadFile(file);
     console.log("[DownloadArchiver] Uploaded →", cid.toString());
-    console.log('[DownloadArchiver] File uploaded →', `https://${cid}.ipfs.w3s.link`);
+    console.log(
+      "[DownloadArchiver] File uploaded →",
+      `https://${cid}.ipfs.w3s.link`
+    );
 
     chrome.notifications.create({
       type: "basic",
