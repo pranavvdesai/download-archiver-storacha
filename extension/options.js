@@ -93,10 +93,15 @@ class RuleEngine {
 
   // Main rule evaluation function
   // Returns { allowed: boolean, reason: string }
-  evaluateFile(filePath, fileSizeMB, rules) {
+  evaluateFile(file, testSizeMB, rules) {
+    // Extract info
+    const filePath = file.name;
     const extension = this.getExtension(filePath);
     const mimeType = this.getMimeType(extension);
-
+  
+    // If no override is passed, use the file's real size in MB
+    const actualSizeMB = file.size / (1024 * 1024);
+  
     // Step 1: Check DENY rules (highest priority)
     if (rules.deny) {
       if (this.matchesExtensionList(extension, rules.deny.extensions)) {
@@ -118,31 +123,29 @@ class RuleEngine {
         };
       }
     }
-
+  
     // Step 2: Check INCLUDE rules
     let includeMatch = false;
     let includeReason = "";
-
+  
     if (rules.include) {
       const hasIncludeRules =
         (rules.include.extensions && rules.include.extensions.length > 0) ||
         (rules.include.mimeTypes && rules.include.mimeTypes.length > 0) ||
         (rules.include.folders && rules.include.folders.length > 0);
-
+  
       if (hasIncludeRules) {
         if (this.matchesExtensionList(extension, rules.include.extensions)) {
           includeMatch = true;
           includeReason = `extension ${extension}`;
-        } else if (
-          this.matchesMimeTypeList(mimeType, rules.include.mimeTypes)
-        ) {
+        } else if (this.matchesMimeTypeList(mimeType, rules.include.mimeTypes)) {
           includeMatch = true;
           includeReason = `MIME type ${mimeType}`;
         } else if (this.matchesFolderList(filePath, rules.include.folders)) {
           includeMatch = true;
           includeReason = `folder pattern`;
         }
-
+  
         if (!includeMatch) {
           return { allowed: false, reason: `Not included by any include rule` };
         }
@@ -155,29 +158,32 @@ class RuleEngine {
       includeMatch = true;
       includeReason = "no include rules specified";
     }
-
+  
     // Step 3: Check SIZE rules
     if (rules.size) {
-      if (rules.size.min && fileSizeMB < rules.size.min) {
+      if (rules.size.min && actualSizeMB < rules.size.min) {
         return {
           allowed: false,
-          reason: `File too small: ${fileSizeMB}MB < ${rules.size.min}MB`,
+          reason: `File too small: ${actualSizeMB.toFixed(2)} MB < ${rules.size.min} MB`,
         };
       }
-      if (rules.size.max && fileSizeMB > rules.size.max) {
+      if (rules.size.max && actualSizeMB > rules.size.max) {
         return {
           allowed: false,
-          reason: `File too large: ${fileSizeMB}MB > ${rules.size.max}MB`,
+          reason: `File too large: ${actualSizeMB.toFixed(2)} MB > ${rules.size.max} MB`,
         };
       }
     }
-
+  
     // Step 4: All checks passed
     return {
       allowed: true,
-      reason: `Allowed: included by ${includeReason}, size ${fileSizeMB}MB is within limits`,
+      reason: `Allowed: included by ${includeReason}, size ${actualSizeMB.toFixed(
+        2
+      )}MB is within limits`,
     };
   }
+  
 }
 
 // Initialize the options page
@@ -189,7 +195,6 @@ class RuleEngine {
   const saveBtn = document.getElementById("save");
   const statusDiv = document.getElementById("status");
   const testBtn = document.getElementById("testRules");
-  const testPathInput = document.getElementById("testPath");
   const testSizeInput = document.getElementById("testSize");
   const testResultDiv = document.getElementById("testResult");
 
@@ -262,16 +267,29 @@ class RuleEngine {
       .filter(Boolean);
   }
 
+  const testFileInput = document.getElementById("testFile");
+  const uploadedPathDiv = document.getElementById("uploadedPath");
+
+  testFileInput.addEventListener("change", () => {
+    const file = testFileInput.files[0];
+    uploadedPathDiv.textContent = file
+      ? `Test file path: ${file.name}`
+      : "";
+  });
+
+
   // Test rules functionality
   testBtn.addEventListener("click", () => {
-    const testPath = testPathInput.value.trim();
     const testSize = parseFloat(testSizeInput.value) || 0;
+    const file = testFileInput.files[0];
 
-    if (!testPath) {
-      testResultDiv.textContent = "Please enter a test file path";
+    if (!file) {
+      testResultDiv.textContent = "Please upload a file to test";
       testResultDiv.className = "mt-2 p-2 rounded test-fail";
       return;
     }
+  
+    const filePath = file.name; // file name only
 
     // Build current rules from form
     const currentRules = {
@@ -287,18 +305,16 @@ class RuleEngine {
       },
       size: {
         min: parseFloat(minSizeInput.value) || null,
-        max: parseFloat(maxSizeInput.value) || null,
+        max: parseFloat(testSize) || null,
       },
     };
 
-    const result = ruleEngine.evaluateFile(testPath, testSize, currentRules);
+    const result = ruleEngine.evaluateFile(file, testSize, currentRules);
 
-    testResultDiv.textContent = `${
-      result.allowed ? "✅ WILL UPLOAD" : "❌ WILL NOT UPLOAD"
-    }\n${result.reason}`;
-    testResultDiv.className = `mt-2 p-2 rounded ${
-      result.allowed ? "test-pass" : "test-fail"
-    }`;
+    testResultDiv.textContent = `${result.allowed ? "✅ WILL UPLOAD" : "❌ WILL NOT UPLOAD"
+      }\n${result.reason}`;
+    testResultDiv.className = `mt-2 p-2 rounded ${result.allowed ? "test-pass" : "test-fail"
+      }`;
   });
 
   // Save configuration

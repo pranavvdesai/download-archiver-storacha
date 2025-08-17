@@ -19,7 +19,7 @@
         right: 20px;
         bottom: 0;
         height: 70%;
-        z-index: 1;
+        z-index: -1;
         pointer-events: none;
         height: 80%;
         width: 600px;
@@ -140,13 +140,10 @@
     <div class="rule-section bg-blue-50 p-4 rounded-lg mb-6">
       <h3>Test Your Rules</h3>
       <label>
-        Test file path (e.g., /Users/john/Downloads/document.pdf):
-        <input
-          type="text"
-          id="testPath"
-          placeholder="/Users/john/Downloads/document.pdf"
-        />
+        Upload a file:
+        <input type="file" id="testFile" />
       </label>
+      <div id="uploadedPath" class="mt-2 text-sm text-gray-700"></div>
       <label>
         File size (MB):
         <input type="number" id="testSize" placeholder="5.2" step="0.1" />
@@ -233,7 +230,7 @@
     <button id="save">Save & Connect</button>
     <div id="status"></div>
     <img
-      src="https://storacha.network/img/hero/racha.svg"
+      src="icons/racha.svg"
       alt="Flame Chicken"
       class="side-image"
     />
