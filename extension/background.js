@@ -208,6 +208,31 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.runtime.openOptionsPage();
+
+  // Create context menu items
+  chrome.contextMenus.create({
+    id: "upload-link",
+    title: "Upload to Storacha Space",
+    contexts: ["link"],
+  });
+
+  chrome.contextMenus.create({
+    id: "upload-image",
+    title: "Upload to Storacha Space",
+    contexts: ["image"],
+  });
+
+  chrome.contextMenus.create({
+    id: "upload-video",
+    title: "Upload to Storacha Space",
+    contexts: ["video"],
+  });
+
+  chrome.contextMenus.create({
+    id: "upload-audio",
+    title: "Upload to Storacha Space",
+    contexts: ["audio"],
+  });
 });
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -291,6 +316,152 @@ async function ensureClientReady() {
   }
 }
 
+// Context menu click handler
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  console.log("[DownloadArchiver] Context menu clicked:", info);
+
+  try {
+    await ensureClientReady();
+
+    let url = info.linkUrl || info.srcUrl;
+    if (!url) {
+      throw new Error("No URL found for upload");
+    }
+
+    // Show initial notification
+    const notificationId = `upload-${Date.now()}`;
+    chrome.notifications.create(notificationId, {
+      type: "basic",
+      iconUrl: chrome.runtime.getURL("icons/48.png"),
+      title: "DownloadArchiver",
+      message: "Starting upload to Storacha Space...",
+    });
+
+    await uploadFromUrl(url, notificationId);
+  } catch (err) {
+    console.error("[DownloadArchiver] Context menu upload error:", err);
+    chrome.notifications.create({
+      type: "basic",
+      iconUrl: chrome.runtime.getURL("icons/48.png"),
+      title: "DownloadArchiver - Error",
+      message: `Upload failed: ${err.message}`,
+    });
+  }
+});
+
+// Function to upload content from URL
+async function uploadFromUrl(url, notificationId) {
+  try {
+    console.log("[DownloadArchiver] Fetching:", url);
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const blob = await response.blob();
+
+    // Extract filename from URL or use generic name
+    let filename = url.split("/").pop().split("?")[0] || "downloaded-file";
+    if (!filename.includes(".")) {
+      // Add extension based on content type
+      const contentType = response.headers.get("content-type") || blob.type;
+      const extension = getExtensionFromMimeType(contentType);
+      if (extension) {
+        filename += `.${extension}`;
+      }
+    }
+
+    const file = new File([blob], filename, { type: blob.type });
+    const fileSizeMB = file.size / (1024 * 1024);
+
+    // Check rules before uploading
+    const evaluation = ruleEngine.evaluateFile(
+      filename,
+      fileSizeMB,
+      uploadRules
+    );
+
+    if (!evaluation.allowed) {
+      throw new Error(`Upload blocked: ${evaluation.reason}`);
+    }
+
+    console.log(
+      "[DownloadArchiver] Uploading:",
+      filename,
+      `(${fileSizeMB.toFixed(2)}MB)`
+    );
+    const cid = await client.uploadFile(file);
+
+    console.log("[DownloadArchiver] Upload complete →", cid.toString());
+
+    // Update notification with success
+    chrome.notifications.update(notificationId, {
+      title: "DownloadArchiver - Success!",
+      message: `${filename} uploaded!\nCID: ${cid.toString()}`,
+    });
+
+    // Log the upload
+    await logUpload({
+      filename,
+      cid: cid.toString(),
+      url,
+      size: fileSizeMB,
+      timestamp: new Date().toISOString(),
+      source: "context-menu",
+    });
+  } catch (err) {
+    console.error("[DownloadArchiver] Upload error:", err);
+
+    // Update notification with error
+    chrome.notifications.update(notificationId, {
+      title: "DownloadArchiver - Error",
+      message: `Upload failed: ${err.message}`,
+    });
+
+    throw err;
+  }
+}
+
+// Helper function to get file extension from MIME type
+function getExtensionFromMimeType(mimeType) {
+  const mimeToExt = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/gif": "gif",
+    "image/webp": "webp",
+    "video/mp4": "mp4",
+    "video/webm": "webm",
+    "audio/mpeg": "mp3",
+    "audio/wav": "wav",
+    "audio/ogg": "ogg",
+    "application/pdf": "pdf",
+    "text/plain": "txt",
+    "text/html": "html",
+  };
+
+  return mimeToExt[mimeType?.toLowerCase()] || null;
+}
+
+// Function to log uploads for history
+async function logUpload(uploadData) {
+  try {
+    const { uploadHistory = [] } = await chrome.storage.local.get([
+      "uploadHistory",
+    ]);
+
+    // Keep only last 100 uploads
+    const newHistory = [uploadData, ...uploadHistory].slice(0, 100);
+
+    await chrome.storage.local.set({ uploadHistory: newHistory });
+    console.log("[DownloadArchiver] Upload logged:", uploadData.filename);
+  } catch (err) {
+    console.error("[DownloadArchiver] Failed to log upload:", err);
+  }
+}
+
 chrome.downloads.onChanged.addListener(async (delta) => {
   console.log("[DownloadArchiver] download.onChanged:", delta);
 
@@ -339,6 +510,16 @@ chrome.downloads.onChanged.addListener(async (delta) => {
       iconUrl: chrome.runtime.getURL("icons/48.png"),
       title: "DownloadArchiver",
       message: `${item.filename} → https://${cid}.ipfs.w3s.link`,
+    });
+
+    // Log the upload
+    await logUpload({
+      filename: item.filename,
+      cid: cid.toString(),
+      url: item.url,
+      size: fileSizeMB,
+      timestamp: new Date().toISOString(),
+      source: "download",
     });
   } catch (err) {
     console.error("[DownloadArchiver] Error uploading download:", err);

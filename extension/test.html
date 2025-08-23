@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Context Menu Test Page</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+        line-height: 1.6;
+      }
+      .test-section {
+        margin: 2rem 0;
+        padding: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+      }
+      img,
+      video,
+      audio {
+        max-width: 300px;
+        margin: 1rem 0;
+        display: block;
+      }
+      a {
+        color: #0066cc;
+        text-decoration: underline;
+      }
+      .instructions {
+        background: #f0f8ff;
+        padding: 1rem;
+        border-radius: 4px;
+        margin-bottom: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>DownloadArchiver Context Menu Test</h1>
+
+    <div class="instructions">
+      <h3>How to test:</h3>
+      <ol>
+        <li>Load this extension in Chrome (Developer mode)</li>
+        <li>Configure your email and Storacha space in the options</li>
+        <li>Right-click on any of the elements below</li>
+        <li>Select "Upload to Storacha Space" from the context menu</li>
+        <li>Check notifications for upload progress and results</li>
+      </ol>
+    </div>
+
+    <div class="test-section">
+      <h3>Test Links</h3>
+      <p>Right-click these links to upload the linked files:</p>
+      <ul>
+        <li>
+          <a
+            href="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+            >PDF File Link</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4"
+            >Video File Link</a
+          >
+        </li>
+        <li>
+          <a href="https://www.soundjay.com/misc/sounds/bell-ringing-05.wav"
+            >Audio File Link</a
+          >
+        </li>
+      </ul>
+    </div>
+
+    <div class="test-section">
+      <h3>Test Images</h3>
+      <p>Right-click these images to upload them:</p>
+      <img
+        src="https://via.placeholder.com/300x200/0066cc/ffffff?text=Test+Image+1"
+        alt="Test Image 1"
+      />
+      <img
+        src="https://via.placeholder.com/300x200/cc6600/ffffff?text=Test+Image+2"
+        alt="Test Image 2"
+      />
+    </div>
+
+    <div class="test-section">
+      <h3>Test Video</h3>
+      <p>Right-click this video to upload it:</p>
+      <video controls>
+        <source
+          src="https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4"
+          type="video/mp4"
+        />
+        Your browser does not support the video tag.
+      </video>
+    </div>
+
+    <div class="test-section">
+      <h3>Test Audio</h3>
+      <p>Right-click this audio to upload it:</p>
+      <audio controls>
+        <source
+          src="https://www.soundjay.com/misc/sounds/bell-ringing-05.wav"
+          type="audio/wav"
+        />
+        Your browser does not support the audio element.
+      </audio>
+    </div>
+
+    <div class="test-section">
+      <h3>Expected Behavior</h3>
+      <ul>
+        <li>
+          ✅ Context menu should appear with "Upload to Storacha Space" option
+        </li>
+        <li>✅ Clicking should show "Starting upload..." notification</li>
+        <li>✅ Success notification should show filename and CID</li>
+        <li>✅ Upload should appear in extension popup history</li>
+        <li>✅ Files should respect your configured upload rules</li>
+        <li>
+          ❌ Error notification should appear for unsupported/blocked files
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>
