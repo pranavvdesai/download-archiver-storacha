@@ -220,6 +220,33 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       });
     return true;
   }
+  
+  if (msg.type === "SELECT_SPACE") {
+    if (!client) {
+      sendResponse({ ok: false, error: "Client not initialized" });
+      return false;
+    }
+    
+    const spaces = client.spaces();
+    const space = spaces.find(s => s.did() === msg.spaceDid);
+    
+    if (!space) {
+      sendResponse({ ok: false, error: "Space not found" });
+      return false;
+    }
+    
+    client.setCurrentSpace(msg.spaceDid)
+      .then(() => {
+        spaceDid = msg.spaceDid;
+        chrome.storage.local.set({ spaceDid });
+        sendResponse({ ok: true, spaceDid });
+      })
+      .catch((err) => {
+        console.error("SELECT_SPACE failed:", err);
+        sendResponse({ ok: false, error: err.message });
+      });
+    return true;
+  }
 });
 
 /**
@@ -238,24 +265,31 @@ async function initClient(email, savedSpaceDid) {
   await account.plan.wait();
   console.log("[DownloadArchiver] Plan ready");
 
+  const existing = client.spaces();
+  
   if (savedSpaceDid) {
-    spaceDid = savedSpaceDid;
-    console.log("[DownloadArchiver] Reusing saved spaceDid:", spaceDid);
-    await client.setCurrentSpace(spaceDid);
-    return spaceDid;
+    const savedSpace = existing.find(s => s.did() === savedSpaceDid);
+    if (savedSpace) {
+      spaceDid = savedSpaceDid;
+      console.log("[DownloadArchiver] Reusing saved spaceDid:", spaceDid);
+      await client.setCurrentSpace(spaceDid);
+      return spaceDid;
+    } else {
+      console.log("[DownloadArchiver] Saved space not found:", savedSpaceDid);
+    }
   }
 
-  const existing = client.spaces();
+  // Try to find or create download-vault space
   const vault = existing.find((s) => s.name === "download-vault");
   if (vault) {
     spaceDid = vault.did();
-    console.log("[DownloadArchiver] Found existing space:", spaceDid);
+    console.log("[DownloadArchiver] Using default space:", spaceDid);
     await client.setCurrentSpace(spaceDid);
   } else {
-    console.log('[DownloadArchiver] Creating space "download-vault" …');
+    console.log('[DownloadArchiver] Creating default space "download-vault"...');
     const space = await client.createSpace("download-vault", { account });
     spaceDid = space.did();
-    console.log("[DownloadArchiver] Created space:", spaceDid);
+    console.log("[DownloadArchiver] Created default space:", spaceDid);
     await client.setCurrentSpace(spaceDid);
   }
 

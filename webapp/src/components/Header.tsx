@@ -1,6 +1,7 @@
 import React from 'react';
-import { LogOut, User, Search } from 'lucide-react';
+import { LogOut, User, Search, ChevronDown } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useSpaces } from '../hooks/useSpaces';
 
 interface HeaderProps {
   searchQuery: string;
@@ -9,6 +10,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange }) => {
   const { user, signOut } = useAuth();
+  const { spaces, currentSpace, isLoading, selectSpace } = useSpaces();
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
@@ -34,6 +36,32 @@ export const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange }) =
         </div>
 
         <div className="flex items-center space-x-4">
+          <div className="relative group">
+            <button
+              className="flex items-center space-x-2 px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-200"
+              onClick={() => document.getElementById('space-selector')?.click()}
+            >
+              <span className="text-sm font-medium text-gray-700">
+                {currentSpace?.name || 'Select Space'}
+              </span>
+              <ChevronDown className="w-4 h-4 text-gray-500" />
+            </button>
+            <select
+              id="space-selector"
+              className="absolute inset-0 w-full opacity-0 cursor-pointer"
+              value={currentSpace?.did() || ''}
+              onChange={(e) => selectSpace(e.target.value)}
+              disabled={isLoading}
+            >
+              <option value="" disabled>Select Space</option>
+              {spaces.map((space) => (
+                <option key={space.did()} value={space.did()}>
+                  {space.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="flex items-center space-x-3">
             {user?.avatar ? (
               <img
