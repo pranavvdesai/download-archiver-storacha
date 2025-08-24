@@ -49,7 +49,12 @@ export const useAuthProvider = (): AuthContextType => {
       // setIsLoading(true);
       setError("");
       toastId = toast.loading("Connecting to Storacha...");
-      toast("Verification email sent! Please check your inbox.");
+
+      const indexDB = await indexedDB.databases();
+      const isExistingDB = indexDB.find(i => i.name === 'w3up-client')
+
+      if(!isExistingDB) toast("Verification email sent! Please check your inbox.");
+
       const client = await create();
       const account = await client.login(userEmail);
 

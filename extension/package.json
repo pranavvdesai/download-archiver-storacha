@@ -1,7 +1,7 @@
 {
   "name": "extension",
   "version": "1.0.0",
-  "main": "background.js",
+  "main": "dist/background.js",
   "scripts": {
     "clean": "rimraf dist",
     "copy-assets": "copyfiles \"icons/**/*\" \"*.html\" \"manifest.json\" dist/",
@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "copyfiles": "^2.4.1",
-    "esbuild": "^0.25.6",
+    "esbuild": "^0.25.9",
     "rimraf": "^5.0.5"
   }
 }

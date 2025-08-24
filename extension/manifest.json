@@ -6,7 +6,7 @@
   "permissions": ["downloads", "storage", "notifications"],
   "host_permissions": ["https://*/*", "http://*/*"],
   "background": {
-    "service_worker": "background.js",
+    "service_worker": "dist/background.js",
     "type": "module"
   },
    "icons": {
