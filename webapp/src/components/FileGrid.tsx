@@ -10,6 +10,9 @@ interface FileGridProps {
   onAddTag: (fileId: string, tag: string) => void;
   onRemoveTag: (fileId: string, tag: string) => void;
   isLoading: boolean;
+  selectedFiles?: string[];
+  onSelectionChange?: (fileId: string, selected: boolean) => void;
+  showSelection?: boolean;
 }
 
 export const FileGrid: React.FC<FileGridProps> = ({
@@ -18,7 +21,10 @@ export const FileGrid: React.FC<FileGridProps> = ({
   onViewModeChange,
   onAddTag,
   onRemoveTag,
-  isLoading
+  isLoading,
+  selectedFiles = [],
+  onSelectionChange,
+  showSelection = false
 }) => {
   if (isLoading) {
     return (
@@ -84,6 +90,9 @@ export const FileGrid: React.FC<FileGridProps> = ({
               viewMode={viewMode}
               onAddTag={onAddTag}
               onRemoveTag={onRemoveTag}
+              isSelected={selectedFiles.includes(file.id)}
+              onSelectionChange={onSelectionChange}
+              showSelection={showSelection}
             />
           ))}
         </div>

@@ -191,6 +191,26 @@ export const useFiles = () => {
     );
   };
 
+  const addTagsToFiles = (fileIds: string[], tag: string) => {
+    setFiles(prevFiles =>
+      prevFiles.map(file =>
+        fileIds.includes(file.id) && !file.tags.includes(tag)
+          ? { ...file, tags: [...file.tags, tag] }
+          : file
+      )
+    );
+  };
+
+  const removeTagsFromFiles = (fileIds: string[], tag: string) => {
+    setFiles(prevFiles =>
+      prevFiles.map(file =>
+        fileIds.includes(file.id)
+          ? { ...file, tags: file.tags.filter(t => t !== tag) }
+          : file
+      )
+    );
+  };
+
   useEffect(() => {
     loadFiles();
   }, []);
@@ -201,6 +221,8 @@ export const useFiles = () => {
     filterFiles,
     addTag,
     removeTag,
+    addTagsToFiles,
+    removeTagsFromFiles,
     refreshFiles: loadFiles
   };
 };
