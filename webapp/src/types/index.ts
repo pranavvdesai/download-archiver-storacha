@@ -3,6 +3,8 @@ export interface User {
   email: string;
   name: string;
   avatar?: string;
+  lastActivity: number;
+  sessionExpiry: number;
 }
 
 export interface StorachaFile {
