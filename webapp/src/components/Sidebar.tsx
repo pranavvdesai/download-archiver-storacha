@@ -182,7 +182,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 const [sortBy, sortOrder] = e.target.value.split('-') as [typeof filters.sortBy, typeof filters.sortOrder];
                 onFiltersChange({ ...filters, sortBy, sortOrder });
               }}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
             >
               <option value="date-desc">Newest First</option>
