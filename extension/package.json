@@ -1,7 +1,7 @@
 {
   "name": "extension",
   "version": "1.0.0",
-  "main": "dist/background.js",
+  "main": "background.js",
   "scripts": {
     "clean": "rimraf dist",
     "copy-assets": "copyfiles \"icons/**/*\" \"*.html\" \"manifest.json\" dist/",
