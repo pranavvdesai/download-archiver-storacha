@@ -98,10 +98,10 @@ class RuleEngine {
     const filePath = file.name;
     const extension = this.getExtension(filePath);
     const mimeType = this.getMimeType(extension);
-  
+
     // If no override is passed, use the file's real size in MB
     const actualSizeMB = file.size / (1024 * 1024);
-  
+
     // Step 1: Check DENY rules (highest priority)
     if (rules.deny) {
       if (this.matchesExtensionList(extension, rules.deny.extensions)) {
@@ -123,17 +123,17 @@ class RuleEngine {
         };
       }
     }
-  
+
     // Step 2: Check INCLUDE rules
     let includeMatch = false;
     let includeReason = "";
-  
+
     if (rules.include) {
       const hasIncludeRules =
         (rules.include.extensions && rules.include.extensions.length > 0) ||
         (rules.include.mimeTypes && rules.include.mimeTypes.length > 0) ||
         (rules.include.folders && rules.include.folders.length > 0);
-  
+
       if (hasIncludeRules) {
         if (this.matchesExtensionList(extension, rules.include.extensions)) {
           includeMatch = true;
@@ -145,7 +145,7 @@ class RuleEngine {
           includeMatch = true;
           includeReason = `folder pattern`;
         }
-  
+
         if (!includeMatch) {
           return { allowed: false, reason: `Not included by any include rule` };
         }
@@ -158,7 +158,7 @@ class RuleEngine {
       includeMatch = true;
       includeReason = "no include rules specified";
     }
-  
+
     // Step 3: Check SIZE rules
     if (rules.size) {
       if (rules.size.min && actualSizeMB < rules.size.min) {
@@ -174,7 +174,7 @@ class RuleEngine {
         };
       }
     }
-  
+
     // Step 4: All checks passed
     return {
       allowed: true,
@@ -183,7 +183,7 @@ class RuleEngine {
       )}MB is within limits`,
     };
   }
-  
+
 }
 
 // Initialize the options page
@@ -259,6 +259,72 @@ class RuleEngine {
   minSizeInput.value = rules.size.min || "";
   maxSizeInput.value = rules.size.max || "";
 
+
+  const toastContainer = document.getElementById("toast-container");
+
+  function createToast(message, type = "info", duration = 3000) {
+    if (!toastContainer) return;
+
+    const toast = document.createElement("div");
+    toast.textContent = message;
+
+    // Base styles
+    toast.style.padding = "12px 20px";
+    toast.style.fontSize = "15px";
+    toast.style.borderRadius = "8px";
+    toast.style.color = "#fff";
+    toast.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
+    toast.style.opacity = "0";
+    toast.style.transition = "opacity 0.3s ease";
+    toast.style.pointerEvents = "auto";
+
+    // Type based colors
+    switch (type) {
+      case "success":
+        toast.style.backgroundColor = "#16a34a"; // green
+        break;
+      case "error":
+        toast.style.backgroundColor = "#dc2626"; // red
+        break;
+      case "warning":
+        toast.style.backgroundColor = "#b45309"; // amber
+        break;
+      default:
+        toast.style.backgroundColor = "#2563eb"; // blue/info
+    }
+
+    toastContainer.appendChild(toast);
+
+    // Show with fade in
+    requestAnimationFrame(() => (toast.style.opacity = "1"));
+
+    // Hide and remove after duration
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.addEventListener(
+        "transitionend",
+        () => {
+          toast.remove();
+        },
+        { once: true }
+      );
+    }, duration);
+  }
+
+  // Convenience wrappers:
+  function toastSuccess(msg, duration) {
+    createToast(msg, "success", duration);
+  }
+  function toastError(msg, duration) {
+    createToast(msg, "error", duration);
+  }
+  function toastInfo(msg, duration) {
+    createToast(msg, "info", duration);
+  }
+  function toastWarning(msg, duration) {
+    createToast(msg, "warning", duration);
+  }
+
   // Helper function to parse comma-separated values
   function parseList(value) {
     return value
@@ -288,7 +354,7 @@ class RuleEngine {
       testResultDiv.className = "mt-2 p-2 rounded test-fail";
       return;
     }
-  
+
     const filePath = file.name; // file name only
 
     // Build current rules from form
@@ -313,6 +379,11 @@ class RuleEngine {
 
     testResultDiv.textContent = `${result.allowed ? "✅ WILL UPLOAD" : "❌ WILL NOT UPLOAD"
       }\n${result.reason}`;
+    if(result.allowed) {
+      toastSuccess("File size is within limit.");
+    }else{
+      toastWarning("File size is out of limit.");
+    }
     testResultDiv.className = `mt-2 p-2 rounded ${result.allowed ? "test-pass" : "test-fail"
       }`;
   });
@@ -322,6 +393,7 @@ class RuleEngine {
     const email = emailInput.value.trim();
     if (!email.includes("@")) {
       statusDiv.textContent = "Please enter a valid email.";
+      toastError("Please enter a valid email.")
       return;
     }
 
@@ -353,12 +425,15 @@ class RuleEngine {
         if (resp?.ok) {
           chrome.storage.local.set({ email, spaceDid: resp.spaceDid });
           statusDiv.textContent = "Configuration & rules saved!";
+          toastSuccess("Configuration & rules saved successfully!");
         } else {
           statusDiv.textContent =
             "Failed to configure: " + (resp.error || "unknown");
           console.error("CONFIG error:", resp.error);
+          toastError("CONFIG error:", resp.error);
         }
       }
     );
+
   });
 })();
