@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Tag, FileText, Archive, Image, Video, Music, Database, Filter, X } from 'lucide-react';
+import { Calendar, Tag, FileText, Archive, Image, Video, Music, Database, Filter, X, ArrowUpDown } from 'lucide-react';
 import { FilterState } from '../types';
 import { getAllTags } from '../utils/fileUtils';
 import { StorachaFile } from '../types';
@@ -57,6 +57,73 @@ export const Sidebar: React.FC<SidebarProps> = ({
     });
   };
 
+  const handleRemoveFilter = (type: keyof FilterState, value?: string) => {
+    if (type === 'tags' && value) {
+      onFiltersChange({
+        ...filters,
+        tags: filters.tags.filter(tag => tag !== value)
+      });
+    } else if (type === 'search') {
+      onFiltersChange({ ...filters, search: '' });
+    } else if (type === 'fileType') {
+      onFiltersChange({ ...filters, fileType: 'all' });
+    } else if (type === 'dateRange') {
+      onFiltersChange({ ...filters, dateRange: 'all' });
+    }
+  };
+
+  const getDateRangeLabel = (range: string) => {
+    switch (range) {
+      case 'today':
+        return 'Today';
+      case 'week':
+        return 'Past Week';
+      case 'month':
+        return 'Past Month';
+      default:
+        return 'All Time';
+    }
+  };
+
+  const getFileTypeLabel = (type: string) => {
+    switch (type) {
+      case 'document':
+        return 'Documents';
+      case 'archive':
+        return 'Archives';
+      case 'image':
+        return 'Images';
+      case 'video':
+        return 'Videos';
+      case 'audio':
+        return 'Audio';
+      case 'data':
+        return 'Data';
+      default:
+        return 'All Files';
+    }
+  };
+
+  const getSortLabel = () => {
+    const sortMap = {
+      'date-desc': 'Newest First',
+      'date-asc': 'Oldest First',
+      'name-asc': 'Name A-Z',
+      'name-desc': 'Name Z-A',
+      'size-desc': 'Largest First',
+      'size-asc': 'Smallest First',
+      'downloads-desc': 'Most Downloaded',
+      'downloads-asc': 'Least Downloaded',
+    };
+    return sortMap[`${filters.sortBy}-${filters.sortOrder}` as keyof typeof sortMap] || '';
+  };
+
+  const hasActiveFilters = 
+    filters.fileType !== 'all' ||
+    filters.dateRange !== 'all' ||
+    filters.tags.length > 0 ||
+    filters.search !== '';
+
   return (
     <>
       {/* Mobile overlay */}
@@ -80,12 +147,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <h2 className="font-semibold text-gray-900">Filters</h2>
             </div>
             <div className="flex items-center space-x-2">
-              <button
-                onClick={clearFilters}
-                className="text-sm text-red-600 hover:text-red-700 transition-colors"
-              >
-                Clear all
-              </button>
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-red-600 hover:text-red-700 transition-colors"
+                >
+                  Clear all
+                </button>
+              )}
               <button
                 onClick={onClose}
                 className="lg:hidden p-1 text-gray-400 hover:text-gray-600 transition-colors"
@@ -97,6 +166,74 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         <div className="p-6 space-y-6 overflow-y-auto h-full pb-20">
+          {/* Active Filters */}
+          {hasActiveFilters && (
+            <div className="space-y-3 animate-in">
+              <h3 className="font-medium text-gray-900">Active Filters</h3>
+              <div className="flex flex-wrap gap-2">
+                {filters.search && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-800">
+                    <FileText className="w-4 h-4 mr-1" />
+                    Search: {filters.search}
+                    <button
+                      onClick={() => handleRemoveFilter('search')}
+                      className="ml-2 text-gray-500 hover:text-gray-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </span>
+                )}
+
+                {filters.fileType !== 'all' && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
+                    <FileText className="w-4 h-4 mr-1" />
+                    {getFileTypeLabel(filters.fileType)}
+                    <button
+                      onClick={() => handleRemoveFilter('fileType')}
+                      className="ml-2 text-blue-600 hover:text-blue-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </span>
+                )}
+
+                {filters.dateRange !== 'all' && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
+                    <Calendar className="w-4 h-4 mr-1" />
+                    {getDateRangeLabel(filters.dateRange)}
+                    <button
+                      onClick={() => handleRemoveFilter('dateRange')}
+                      className="ml-2 text-green-600 hover:text-green-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </span>
+                )}
+
+                {filters.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800"
+                  >
+                    <Tag className="w-4 h-4 mr-1" />
+                    {tag}
+                    <button
+                      onClick={() => handleRemoveFilter('tags', tag)}
+                      className="ml-2 text-purple-600 hover:text-purple-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </span>
+                ))}
+
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-yellow-100 text-yellow-800">
+                  <ArrowUpDown className="w-4 h-4 mr-1" />
+                  {getSortLabel()}
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* File Types */}
           <div>
             <h3 className="font-medium text-gray-900 mb-3">File Types</h3>
