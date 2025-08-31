@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { LogOut, User, Search } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { LogoutModal } from './LogoutModal';
 
 interface HeaderProps {
   searchQuery: string;
@@ -9,6 +10,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange }) => {
   const { user, signOut } = useAuth();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
@@ -50,7 +52,7 @@ export const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange }) =
           </div>
           
           <button
-            onClick={signOut}
+            onClick={() => setIsLogoutModalOpen(true)}
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
             title="Sign out"
           >
@@ -58,6 +60,15 @@ export const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange }) =
           </button>
         </div>
       </div>
+
+      <LogoutModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={() => {
+          signOut();
+          setIsLogoutModalOpen(false);
+        }}
+      />
     </header>
   );
 };
