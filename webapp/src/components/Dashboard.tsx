@@ -3,13 +3,15 @@ import { Menu } from 'lucide-react';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { FileGrid } from './FileGrid';
+import { BulkOperationsToolbar } from './BulkOperationsToolbar';
 import { useFiles } from '../hooks/useFiles';
 import { FilterState, ViewMode } from '../types';
 
 export const Dashboard: React.FC = () => {
-  const { files, isLoading, filterFiles, addTag, removeTag } = useFiles();
+  const { files, isLoading, filterFiles, addTag, removeTag, addTagsToFiles, removeTagsFromFiles } = useFiles();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     fileType: 'all',
@@ -25,6 +27,18 @@ export const Dashboard: React.FC = () => {
 
   const handleSearchChange = (search: string) => {
     setFilters({ ...filters, search });
+  };
+
+  const handleSelectionChange = (fileId: string, selected: boolean) => {
+    setSelectedFiles(prev => 
+      selected 
+        ? [...prev, fileId]
+        : prev.filter(id => id !== fileId)
+    );
+  };
+
+  const handleClearSelection = () => {
+    setSelectedFiles([]);
   };
 
   return (
@@ -55,6 +69,13 @@ export const Dashboard: React.FC = () => {
               </button>
             </div>
 
+            <BulkOperationsToolbar
+              selectedFiles={selectedFiles}
+              onAddTags={addTagsToFiles}
+              onRemoveTags={removeTagsFromFiles}
+              onClearSelection={handleClearSelection}
+            />
+
             <FileGrid
               files={filteredFiles}
               viewMode={viewMode}
@@ -62,6 +83,9 @@ export const Dashboard: React.FC = () => {
               onAddTag={addTag}
               onRemoveTag={removeTag}
               isLoading={isLoading}
+              selectedFiles={selectedFiles}
+              onSelectionChange={handleSelectionChange}
+              showSelection={true}
             />
           </div>
         </main>

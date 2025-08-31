@@ -8,13 +8,19 @@ interface FileCardProps {
   viewMode: 'grid' | 'list';
   onAddTag: (fileId: string, tag: string) => void;
   onRemoveTag: (fileId: string, tag: string) => void;
+  isSelected?: boolean;
+  onSelectionChange?: (fileId: string, selected: boolean) => void;
+  showSelection?: boolean;
 }
 
 export const FileCard: React.FC<FileCardProps> = ({
   file,
   viewMode,
   onAddTag,
-  onRemoveTag
+  onRemoveTag,
+  isSelected = false,
+  onSelectionChange,
+  showSelection = false
 }) => {
   const [showActions, setShowActions] = useState(false);
   const [isAddingTag, setIsAddingTag] = useState(false);
@@ -44,9 +50,19 @@ export const FileCard: React.FC<FileCardProps> = ({
 
   if (viewMode === 'list') {
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 group">
+      <div className={`bg-white border rounded-lg p-4 hover:shadow-md transition-all duration-200 group ${
+        isSelected ? 'border-red-500 bg-red-50' : 'border-gray-200'
+      }`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4 flex-1 min-w-0">
+            {showSelection && (
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={(e) => onSelectionChange?.(file.id, e.target.checked)}
+                className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+              />
+            )}
             <div className="text-2xl">{getFileTypeIcon(file.type)}</div>
             <div className="flex-1 min-w-0">
               <h3 className="font-medium text-gray-900 truncate">{file.name}</h3>
@@ -147,8 +163,20 @@ export const FileCard: React.FC<FileCardProps> = ({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 group">
+    <div className={`bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 group ${
+      isSelected ? 'border-red-500' : 'border-gray-200'
+    }`}>
       <div className="aspect-square bg-gray-50 flex items-center justify-center text-4xl relative">
+        {showSelection && (
+          <div className="absolute top-2 left-2 z-10">
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={(e) => onSelectionChange?.(file.id, e.target.checked)}
+              className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500 bg-white"
+            />
+          </div>
+        )}
         {getFileTypeIcon(file.type)}
         <div className="absolute top-2 right-2">
           {file.isPublic ? (
