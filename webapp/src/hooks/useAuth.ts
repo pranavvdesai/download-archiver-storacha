@@ -4,6 +4,7 @@ import { create } from "@web3-storage/w3up-client";
 import * as DID from "@ipld/dag-ucan/did";
 import * as Delegation from "@ucanto/core/delegation";
 import toast from "react-hot-toast";
+import { generateAvatarUrl } from "../utils/avatar";
 
 interface AuthContextType {
   user: User | null;
@@ -97,8 +98,7 @@ export const useAuthProvider = (): AuthContextType => {
       const newUser: User = {
         email: userEmail,
         spaceDid: savedSpaceDid || (client.currentSpace())?.did(),
-        avatar:
-          "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop",
+        avatar: generateAvatarUrl(userEmail),
       };
 
       localStorage.setItem("storacha-session", JSON.stringify(newUser));
