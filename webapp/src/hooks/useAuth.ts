@@ -24,9 +24,15 @@ export const useAuthProvider = () => {
 
   useEffect(() => {
     // Check for existing session
-    const storedUser = localStorage.getItem('storacha_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    const storedSession = localStorage.getItem('storacha-session');
+    if (storedSession) {
+      const sessionData = JSON.parse(storedSession);
+      const userData = sessionData.user || {
+        id: '1',
+        email: sessionData.email,
+        name: sessionData.email.split('@')[0]
+      };
+      setUser(userData);
     }
     setIsLoading(false);
   }, []);
@@ -46,7 +52,11 @@ export const useAuthProvider = () => {
       };
       
       setUser(mockUser);
-      localStorage.setItem('storacha_user', JSON.stringify(mockUser));
+      const sessionData = {
+        user: mockUser,
+        email: mockUser.email
+      };
+      localStorage.setItem('storacha-session', JSON.stringify(sessionData));
     } else {
       throw new Error('Invalid credentials');
     }
@@ -56,7 +66,7 @@ export const useAuthProvider = () => {
 
   const signOut = () => {
     setUser(null);
-    localStorage.removeItem('storacha_user');
+    localStorage.removeItem('storacha-session');
   };
 
   return {
