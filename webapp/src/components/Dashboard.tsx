@@ -6,6 +6,7 @@ import { FileGrid } from './FileGrid';
 import { BulkOperationsToolbar } from './BulkOperationsToolbar';
 import { FilterState, ViewMode, StorachaFile } from '../types';
 import { getClient } from '../hooks/useAuth';
+import { decodeCidToString } from '../utils/decodeCidToString';
 
 
 export const Dashboard: React.FC = () => {
@@ -56,24 +57,25 @@ export const Dashboard: React.FC = () => {
     listFiles();
   }, []);
 
-  // Client-side filtering based on filters state
   const filteredFiles = useMemo(() => {
     return files.filter(file => {
-      // Filter by search by name or cid
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
-        if (!file.name.toLowerCase().includes(searchLower) && !file.cid.toLowerCase().includes(searchLower)) {
+        const cidStr = decodeCidToString(file.cid).toLowerCase();
+        if (!file.name.toLowerCase().includes(searchLower) && !cidStr.includes(searchLower)) {
           return false;
         }
       }
-      // File type and dateRange filters can be expanded here if metadata available
       return true;
     });
   }, [files, filters]);
+  
 
   const handleSearchChange = (search: string) => {
-    setFilters({ ...filters, search });
+    console.log("Search changed: ", search);
+    setFilters({ ...filters, search: search.trim() });
   };
+  
 
   const handleSelectionChange = (fileId: string, selected: boolean) => {
     setSelectedFiles(prev => 

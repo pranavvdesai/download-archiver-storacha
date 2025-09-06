@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Copy, Download, Tag, Globe, Lock, MoreVertical, Check, X } from 'lucide-react';
 import { StorachaFile } from '../types';
 import { formatFileSize, formatDate, getFileTypeIcon, copyToClipboard } from '../utils/fileUtils';
-import { CID } from 'multiformats';
+import { decodeCidToString } from '../utils/decodeCidToString';
 
 interface FileCardProps {
   file: StorachaFile;
@@ -28,24 +28,9 @@ export const FileCard: React.FC<FileCardProps> = ({
   const [newTag, setNewTag] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
 
-  let cidStr = '';
-  try {
-    if (file.cid instanceof Uint8Array) {
-      cidStr = CID.decode(file.cid).toString();
-    } else if (typeof file.cid === 'object') {
-      // If cid is numeric-object, convert to Uint8Array manually
-      const bytes = new Uint8Array(Object.values(file.cid));
-      cidStr = CID.decode(bytes).toString();
-    } else if (typeof file.cid === 'string') {
-      cidStr = file.cid; // already string
-    }
-  } catch (err) {
-    console.error('Failed to decode CID:', err);
-    cidStr = '';
-  }
+  const cidStr = decodeCidToString(file.cid);
 
   const previewUrl = cidStr ? `https://${cidStr}.ipfs.w3s.link/` : '#';
-  console.log('Preview URL:', previewUrl);
   const handleCopyCID = async () => {
     const success = await copyToClipboard(cidStr);
     if (success) {
