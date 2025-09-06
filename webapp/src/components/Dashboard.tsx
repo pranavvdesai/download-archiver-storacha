@@ -44,7 +44,6 @@ export const Dashboard: React.FC = () => {
       const client = await getClient();
       const response = await client.capability.upload.list({ cursor: '', size: 25 });
       const mappedFiles = mapUploadsToFiles(response.results);
-      console.log("Fetched files: ", mappedFiles);
       setFiles(mappedFiles);
     } catch (error) {
       console.error("Failed to list files: ", error);
