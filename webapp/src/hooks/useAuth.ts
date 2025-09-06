@@ -6,6 +6,7 @@ import * as Delegation from "@ucanto/core/delegation";
 import toast from "react-hot-toast";
 import { generateAvatarUrl } from "../utils/avatar";
 
+
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
@@ -13,6 +14,7 @@ interface AuthContextType {
   signIn: (email: string) => Promise<void>;
   signOut: () => void;
 }
+
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -23,6 +25,19 @@ export const useAuth = () => {
   }
   return context;
 };
+
+
+// Global client singleton promise
+let clientPromise: Promise<any> | null = null;
+
+// Exported function to get or create the client
+export function getClient() {
+  if (!clientPromise) {
+    clientPromise = create();
+  }
+  return clientPromise;
+}
+
 
 export const useAuthProvider = (): AuthContextType => {
   const [user, setUser] = useState<User | null>(null);
@@ -47,16 +62,15 @@ export const useAuthProvider = (): AuthContextType => {
     let toastId: string | undefined;
 
     try {
-      // setIsLoading(true);
       setError("");
       toastId = toast.loading("Connecting to Storacha...");
 
       const indexDB = await indexedDB.databases();
-      const isExistingDB = indexDB.find(i => i.name === 'w3up-client')
+      const isExistingDB = indexDB.find(i => i.name === 'w3up-client');
 
-      if(!isExistingDB) toast("Verification email sent! Please check your inbox.");
+      if (!isExistingDB) toast("Verification email sent! Please check your inbox.");
 
-      const client = await create();
+      const client = await getClient();
       const account = await client.login(userEmail);
 
       await account.plan.wait(); // Await user email verification
@@ -149,5 +163,6 @@ export const useAuthProvider = (): AuthContextType => {
     signOut,
   };
 };
+
 
 export { AuthContext };

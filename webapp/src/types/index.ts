@@ -11,7 +11,7 @@ export interface StorachaFile {
   size: number;
   type: string;
   mimeType: string;
-  uploadedAt: Date;
+  created: Date;
   tags: string[];
   isPublic: boolean;
   downloadCount: number;
