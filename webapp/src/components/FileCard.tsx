@@ -50,7 +50,7 @@ export const FileCard: React.FC<FileCardProps> = ({
   const handleDownload = () => {
     const a = document.createElement('a');
     a.href = previewUrl;
-    a.download = file.name || 'file';
+    a.download = cidStr || 'file';
     a.click();
   };
 
@@ -72,7 +72,7 @@ export const FileCard: React.FC<FileCardProps> = ({
             <div className="text-2xl">{!previewUrl ? getFileTypeIcon(file.type) : 
         <img src={previewUrl} className='h-10 w-10' />}</div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-medium text-gray-900 truncate">{file.name}</h3>
+              <h3 className="font-medium text-gray-900 truncate">{cidStr}</h3>
               <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
                 <span>{formatFileSize(file.size)}</span>
                 <span>{formatDate(file.created)}</span>
@@ -217,7 +217,7 @@ export const FileCard: React.FC<FileCardProps> = ({
       </div>
 
       <div className="p-4">
-        <h3 className="font-medium text-gray-900 truncate mb-2">{file.name}</h3>
+        <h3 className="font-medium text-gray-900 truncate mb-2">{cidStr}</h3>
 
         <div className="space-y-2 text-sm text-gray-500">
           <div className="flex justify-between">
