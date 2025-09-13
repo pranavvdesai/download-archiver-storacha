@@ -209,33 +209,15 @@ chrome.storage.onChanged.addListener((changes, area) => {
 chrome.runtime.onInstalled.addListener(() => {
   chrome.runtime.openOptionsPage();
 
-  // Create context menu items
+  // Create a single context menu item for all supported contexts
   chrome.contextMenus.create({
-    id: "upload-link",
-    title: "Upload to Storacha Space",
-    contexts: ["link"],
-  });
-
-  chrome.contextMenus.create({
-    id: "upload-image",
-    title: "Upload to Storacha Space",
-    contexts: ["image"],
-  });
-
-  chrome.contextMenus.create({
-    id: "upload-video",
-    title: "Upload to Storacha Space",
-    contexts: ["video"],
-  });
-
-  chrome.contextMenus.create({
-    id: "upload-audio",
-    title: "Upload to Storacha Space",
-    contexts: ["audio"],
+    id: "upload-to-storacha",
+    title: "Upload to Storacha",
+    contexts: ["link", "image", "video", "audio"],
   });
 });
 
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === "CONFIG") {
     initClient(msg.email, msg.spaceDid)
       .then((did) => sendResponse({ ok: true, spaceDid: did }))
@@ -317,7 +299,7 @@ async function ensureClientReady() {
 }
 
 // Context menu click handler
-chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+chrome.contextMenus.onClicked.addListener(async (info, _tab) => {
   console.log("[DownloadArchiver] Context menu clicked:", info);
 
   try {
@@ -354,28 +336,144 @@ async function uploadFromUrl(url, notificationId) {
   try {
     console.log("[DownloadArchiver] Fetching:", url);
 
-    const response = await fetch(url);
-    if (!response.ok) {
+    let response;
+    let blob;
+
+    // Try multiple approaches to fetch the content
+    try {
+      // First attempt: Standard fetch with browser-like headers
+      response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Accept: "image/*,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.5",
+          "Accept-Encoding": "gzip, deflate, br",
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          Referer: new URL(url).origin,
+          "Sec-Fetch-Dest": "image",
+          "Sec-Fetch-Mode": "cors",
+          "Sec-Fetch-Site": "cross-site",
+        },
+        mode: "cors",
+        credentials: "omit",
+        cache: "no-cache",
+      });
+    } catch (corsError) {
+      console.log(
+        "[DownloadArchiver] CORS failed, trying no-cors mode:",
+        corsError.message
+      );
+
+      // Second attempt: no-cors mode (limited but sometimes works)
+      response = await fetch(url, {
+        method: "GET",
+        mode: "no-cors",
+        credentials: "omit",
+        cache: "no-cache",
+      });
+    }
+
+    if (!response.ok && response.status !== 0) {
+      // status 0 is expected in no-cors mode
       throw new Error(
         `Failed to fetch: ${response.status} ${response.statusText}`
       );
     }
 
-    const blob = await response.blob();
+    blob = await response.blob();
 
-    // Extract filename from URL or use generic name
-    let filename = url.split("/").pop().split("?")[0] || "downloaded-file";
-    if (!filename.includes(".")) {
-      // Add extension based on content type
-      const contentType = response.headers.get("content-type") || blob.type;
-      const extension = getExtensionFromMimeType(contentType);
-      if (extension) {
-        filename += `.${extension}`;
+    // Validate that we actually got file content
+    const contentType =
+      response.headers.get("content-type") ||
+      blob.type ||
+      "application/octet-stream";
+    console.log(
+      "[DownloadArchiver] Content-Type:",
+      contentType,
+      "Blob size:",
+      blob.size
+    );
+
+    // Check for common issues
+    if (blob.size === 0) {
+      throw new Error(
+        "Received empty file. The server may be blocking direct access to this resource."
+      );
+    }
+
+    if (blob.size < 100 && contentType.includes("text/html")) {
+      const text = await blob.text();
+      if (
+        text.includes("<html") ||
+        text.includes("<!DOCTYPE") ||
+        text.includes("Access Denied") ||
+        text.includes("Forbidden")
+      ) {
+        throw new Error(
+          "Server returned an error page instead of the file. This resource may be protected against hotlinking."
+        );
       }
     }
 
-    const file = new File([blob], filename, { type: blob.type });
+    // For very small files that might be error responses, do additional validation
+    if (blob.size < 1000) {
+      try {
+        const text = await blob.slice(0, 500).text();
+        if (
+          text.includes("error") ||
+          text.includes("denied") ||
+          text.includes("forbidden") ||
+          text.includes("not found") ||
+          text.includes("unauthorized")
+        ) {
+          throw new Error(
+            "Server returned an error response instead of the file content."
+          );
+        }
+      } catch (textError) {
+        // If we can't read as text, it's probably binary data (good)
+        console.log("[DownloadArchiver] File appears to be binary data (good)");
+      }
+    }
+
+    // Extract filename from URL or use generic name
+    let filename =
+      url.split("/").pop().split("?")[0].split("#")[0] || "downloaded-file";
+
+    // Clean up filename and ensure it has an extension
+    filename = filename.replace(/[^a-zA-Z0-9.-]/g, "_").replace(/_{2,}/g, "_");
+    if (
+      !filename.includes(".") ||
+      filename.endsWith(".") ||
+      filename.length < 3
+    ) {
+      // Add extension based on content type or URL pattern
+      const extension =
+        getExtensionFromMimeType(contentType) || guessExtensionFromUrl(url);
+      if (extension) {
+        filename = (filename.replace(/\.$/, "") || "file") + `.${extension}`;
+      } else {
+        filename = "downloaded-file.bin"; // fallback
+      }
+    }
+
+    // Ensure filename is reasonable
+    if (filename.length > 100) {
+      const ext = filename.split(".").pop();
+      filename = filename.substring(0, 90) + "." + ext;
+    }
+
+    const file = new File([blob], filename, { type: contentType });
     const fileSizeMB = file.size / (1024 * 1024);
+
+    console.log("[DownloadArchiver] File details:", {
+      filename,
+      size: `${fileSizeMB.toFixed(2)}MB`,
+      type: contentType,
+      blobSize: blob.size,
+      url: url.substring(0, 100) + (url.length > 100 ? "..." : ""),
+    });
 
     // Check rules before uploading
     const evaluation = ruleEngine.evaluateFile(
@@ -425,21 +523,58 @@ async function uploadFromUrl(url, notificationId) {
   }
 }
 
+// Helper function to guess extension from URL patterns
+function guessExtensionFromUrl(url) {
+  const urlLower = url.toLowerCase();
+  if (urlLower.includes(".jpg") || urlLower.includes("jpeg")) return "jpg";
+  if (urlLower.includes(".png")) return "png";
+  if (urlLower.includes(".gif")) return "gif";
+  if (urlLower.includes(".webp")) return "webp";
+  if (urlLower.includes(".svg")) return "svg";
+  if (urlLower.includes(".mp4")) return "mp4";
+  if (urlLower.includes(".webm")) return "webm";
+  if (urlLower.includes(".mp3")) return "mp3";
+  if (urlLower.includes(".wav")) return "wav";
+  if (urlLower.includes(".pdf")) return "pdf";
+  return null;
+}
+
 // Helper function to get file extension from MIME type
 function getExtensionFromMimeType(mimeType) {
   const mimeToExt = {
+    // Images
     "image/jpeg": "jpg",
+    "image/jpg": "jpg",
     "image/png": "png",
     "image/gif": "gif",
     "image/webp": "webp",
+    "image/svg+xml": "svg",
+    "image/bmp": "bmp",
+    "image/tiff": "tiff",
+    // Videos
     "video/mp4": "mp4",
     "video/webm": "webm",
+    "video/avi": "avi",
+    "video/mov": "mov",
+    "video/wmv": "wmv",
+    "video/flv": "flv",
+    // Audio
     "audio/mpeg": "mp3",
+    "audio/mp3": "mp3",
     "audio/wav": "wav",
     "audio/ogg": "ogg",
+    "audio/aac": "aac",
+    "audio/flac": "flac",
+    // Documents
     "application/pdf": "pdf",
     "text/plain": "txt",
     "text/html": "html",
+    "application/json": "json",
+    "application/xml": "xml",
+    // Archives
+    "application/zip": "zip",
+    "application/x-rar-compressed": "rar",
+    "application/x-7z-compressed": "7z",
   };
 
   return mimeToExt[mimeType?.toLowerCase()] || null;

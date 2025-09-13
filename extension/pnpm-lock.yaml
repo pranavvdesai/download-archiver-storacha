@@ -11,6 +11,9 @@ dependencies:
   '@ucanto/client':
     specifier: ^9.0.1
     version: 9.0.1
+  '@ucanto/core':
+    specifier: ^10.4.0
+    version: 10.4.0
   '@web3-storage/w3up-client':
     specifier: ^17.3.0
     version: 17.3.0
