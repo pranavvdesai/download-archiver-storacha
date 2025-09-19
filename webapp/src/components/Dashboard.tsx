@@ -1,24 +1,36 @@
-import React, { useState, useMemo } from 'react';
-import { Menu } from 'lucide-react';
-import { Header } from './Header';
-import { Sidebar } from './Sidebar';
-import { FileGrid } from './FileGrid';
-import { BulkOperationsToolbar } from './BulkOperationsToolbar';
-import { useFiles } from '../hooks/useFiles';
-import { FilterState, ViewMode } from '../types';
+import React, { useState, useMemo } from "react";
+import { Menu } from "lucide-react";
+import { Header } from "./Header";
+import { Sidebar } from "./Sidebar";
+import { FileGrid } from "./FileGrid";
+import { BulkOperationsToolbar } from "./BulkOperationsToolbar";
+import { SpaceManagement } from "./SpaceManagement";
+import { useFiles } from "../hooks/useFiles";
+import { FilterState, ViewMode } from "../types";
+
+type DashboardView = "files" | "space";
 
 export const Dashboard: React.FC = () => {
-  const { files, isLoading, filterFiles, addTag, removeTag, addTagsToFiles, removeTagsFromFiles } = useFiles();
+  const {
+    files,
+    isLoading,
+    filterFiles,
+    addTag,
+    removeTag,
+    addTagsToFiles,
+    removeTagsFromFiles,
+  } = useFiles();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const [currentView, setCurrentView] = useState<DashboardView>("files");
   const [filters, setFilters] = useState<FilterState>({
-    search: '',
-    fileType: 'all',
-    dateRange: 'all',
+    search: "",
+    fileType: "all",
+    dateRange: "all",
     tags: [],
-    sortBy: 'date',
-    sortOrder: 'desc'
+    sortBy: "date",
+    sortOrder: "desc",
   });
 
   const filteredFiles = useMemo(() => {
@@ -30,10 +42,8 @@ export const Dashboard: React.FC = () => {
   };
 
   const handleSelectionChange = (fileId: string, selected: boolean) => {
-    setSelectedFiles(prev => 
-      selected 
-        ? [...prev, fileId]
-        : prev.filter(id => id !== fileId)
+    setSelectedFiles((prev) =>
+      selected ? [...prev, fileId] : prev.filter((id) => id !== fileId)
     );
   };
 
@@ -41,13 +51,20 @@ export const Dashboard: React.FC = () => {
     setSelectedFiles([]);
   };
 
+  if (currentView === "space") {
+    return <SpaceManagement />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header 
+      <Header
         searchQuery={filters.search}
         onSearchChange={handleSearchChange}
+        onSpaceManagement={() => setCurrentView("space")}
+        onBackToFiles={() => setCurrentView("files")}
+        currentView={currentView}
       />
-      
+
       <div className="flex">
         <Sidebar
           files={files}
