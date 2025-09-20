@@ -151,10 +151,13 @@ export const useAuthProvider = (): AuthContextType => {
         await client.addSpace(proof);
       }
 
+      const now = Date.now();
       const newUser: User = {
         email: userEmail,
         spaceDid: savedSpaceDid || (client.currentSpace())?.did(),
         avatar: generateAvatarUrl(userEmail),
+        lastActivity: now,
+        sessionExpiry: now + SESSION_TIMEOUT
       };
 
       localStorage.setItem("storacha-session", JSON.stringify(newUser));
