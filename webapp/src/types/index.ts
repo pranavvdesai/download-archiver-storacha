@@ -1,7 +1,11 @@
 export interface User {
+  id: string;
+  name: string;
+  avatar?: string;
+  lastActivity: number;
+  sessionExpiry: number;
   email: `${string}`;
   spaceDid?: `did:${string}:${string}`;
-  avatar: string;
 }
 
 export interface StorachaFile {
