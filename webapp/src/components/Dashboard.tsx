@@ -1,15 +1,20 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Menu } from 'lucide-react';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { FileGrid } from './FileGrid';
-import { useFiles } from '../hooks/useFiles';
-import { FilterState, ViewMode } from '../types';
+import { BulkOperationsToolbar } from './BulkOperationsToolbar';
+import { FilterState, ViewMode, StorachaFile } from '../types';
+import { getClient } from '../hooks/useAuth';
+import { decodeCidToString } from '../utils/decodeCidToString';
+
 
 export const Dashboard: React.FC = () => {
-  const { files, isLoading, filterFiles, addTag, removeTag } = useFiles();
+  const [files, setFiles] = useState<StorachaFile[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     fileType: 'all',
@@ -19,12 +24,68 @@ export const Dashboard: React.FC = () => {
     sortOrder: 'desc'
   });
 
+  // Map upload API response to StorachaFile[]
+  function mapUploadsToFiles(uploadResponse: any[]): any[] {
+    return uploadResponse.map((upload, index) => ({
+      id: upload.root['/'],            // use root CID as ID
+      cid: upload.root['/'],
+      name: `File ${index + 1}`,       // fabricate name as no name in response
+      size: 0,                        // no size info in response, default to 0 or fetch if available
+      created: new Date(upload.insertedAt).getTime(),
+      updated: new Date(upload.updatedAt).getTime(),
+      shards: upload.shards.map((shard: any) => shard['/']),
+    }));
+  }
+
+  // Call client upload list once on mount
+  async function listFiles() {
+    setIsLoading(true);
+    try {
+      const client = await getClient();
+      const response = await client.capability.upload.list({ cursor: '', size: 25 });
+      const mappedFiles = mapUploadsToFiles(response.results);
+      setFiles(mappedFiles);
+    } catch (error) {
+      console.error("Failed to list files: ", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    listFiles();
+  }, []);
+
   const filteredFiles = useMemo(() => {
-    return filterFiles(filters);
-  }, [files, filters, filterFiles]);
+    return files.filter(file => {
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        const cidStr = decodeCidToString(file.cid).toLowerCase();
+        if (!file.name.toLowerCase().includes(searchLower) && !cidStr.includes(searchLower)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [files, filters]);
+  
 
   const handleSearchChange = (search: string) => {
-    setFilters({ ...filters, search });
+    console.log("Search changed: ", search);
+    setFilters({ ...filters, search: search.trim() });
+  };
+  
+
+  const handleSelectionChange = (fileId: string, selected: boolean) => {
+    setSelectedFiles(prev => 
+      selected 
+        ? [...prev, fileId]
+        : prev.filter(id => id !== fileId)
+    );
+  };
+
+  const handleClearSelection = () => {
+    setSelectedFiles([]);
   };
 
   return (
@@ -55,13 +116,23 @@ export const Dashboard: React.FC = () => {
               </button>
             </div>
 
+            <BulkOperationsToolbar
+              selectedFiles={selectedFiles}
+              onAddTags={() => {}}
+              onRemoveTags={() => {}}
+              onClearSelection={handleClearSelection}
+            />
+
             <FileGrid
               files={filteredFiles}
               viewMode={viewMode}
               onViewModeChange={setViewMode}
-              onAddTag={addTag}
-              onRemoveTag={removeTag}
+              onAddTag={() => {}}
+              onRemoveTag={() => {}}
               isLoading={isLoading}
+              selectedFiles={selectedFiles}
+              onSelectionChange={handleSelectionChange}
+              showSelection={true}
             />
           </div>
         </main>
