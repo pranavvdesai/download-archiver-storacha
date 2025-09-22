@@ -10,14 +10,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ipld/dag-ucan": "^3.4.5",
+    "@ucanto/core": "^10.4.0",
     "@web3-storage/w3up-client": "^17.3.0",
     "lucide-react": "^0.344.0",
+    "multiformats": "^13.4.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-hot-toast": "^2.6.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
-    "@types/chrome": "^0.1.4",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",

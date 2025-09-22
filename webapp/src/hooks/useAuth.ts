@@ -1,5 +1,8 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { create } from '@web3-storage/w3up-client';
 import { User } from '../types';
+
+let client: any = null;
 
 interface AuthContextType {
   user: User | null;
@@ -48,7 +51,9 @@ export const useAuthProvider = () => {
         id: '1',
         email: email,
         name: 'Demo User',
-        avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'
+        avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+        lastActivity: Date.now(),
+        sessionExpiry: Date.now() + 24 * 60 * 60 * 1000
       };
       
       setUser(mockUser);
@@ -78,3 +83,17 @@ export const useAuthProvider = () => {
 };
 
 export { AuthContext };
+
+export async function getClient() {
+  if (!client) {
+    client = await create();
+    const storedSession = localStorage.getItem('storacha-session');
+    if (!storedSession) {
+      throw new Error('No session found');
+    }
+    const { email } = JSON.parse(storedSession);
+    const account = await client.login(email);
+    await account.plan.wait();
+  }
+  return client;
+}

@@ -1,3 +1,5 @@
+import { StorachaFile } from "../types";
+
 export const formatFileSize = (bytes: number): string => {
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   if (bytes === 0) return '0 B';
@@ -38,10 +40,14 @@ export const copyToClipboard = async (text: string): Promise<boolean> => {
   }
 };
 
-export const getAllTags = (files: StorachaFile[]): string[] => {
+export function getAllTags(files: StorachaFile[] = []): string[] {
   const tagSet = new Set<string>();
+
   files.forEach(file => {
-    file.tags.forEach(tag => tagSet.add(tag));
+    (file.tags ?? []).forEach(tag => {
+      tagSet.add(tag);
+    });
   });
-  return Array.from(tagSet).sort();
-};
+
+  return Array.from(tagSet);
+}
