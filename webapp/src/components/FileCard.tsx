@@ -56,8 +56,8 @@ export const FileCard: React.FC<FileCardProps> = ({
 
   if (viewMode === 'list') {
     return (
-      <div className={`bg-white border rounded-lg p-4 hover:shadow-md transition-all duration-200 group ${
-        isSelected ? 'border-red-500 bg-red-50' : 'border-gray-200'
+      <div className={`bg-white dark:bg-gray-800 border rounded-lg p-4 hover:shadow-md transition-all duration-200 group ${
+        isSelected ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700'
       }`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4 flex-1 min-w-0">
@@ -72,8 +72,8 @@ export const FileCard: React.FC<FileCardProps> = ({
             <div className="text-2xl">{!previewUrl ? getFileTypeIcon(file.type) : 
         <img src={previewUrl} className='h-10 w-10' />}</div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-medium text-gray-900 truncate">{cidStr}</h3>
-              <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
+              <h3 className="font-medium text-gray-900 dark:text-white truncate">{cidStr}</h3>
+              <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400 mt-1">
                 <span>{formatFileSize(file.size)}</span>
                 <span>{formatDate(file.created)}</span>
                 <span className="flex items-center space-x-1">
@@ -82,7 +82,7 @@ export const FileCard: React.FC<FileCardProps> = ({
                 </span>
                 <span>{file.downloadCount ?? 0} downloads</span>
                 <a href={previewUrl} target="_blank" rel="noopener noreferrer"
-                  className="text-red-600 hover:underline ml-2"
+                  className="text-primary-600 dark:text-primary-400 hover:underline ml-2"
                 >
                   Preview
                 </a>
@@ -95,10 +95,10 @@ export const FileCard: React.FC<FileCardProps> = ({
               {(file.tags ?? []).map(tag => (
                 <span
                   key={tag}
-                  className="inline-flex items-center px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full group-hover:bg-red-200 transition-colors"
+                  className="inline-flex items-center px-2 py-1 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-300 rounded-full group-hover:bg-primary-200 dark:group-hover:bg-primary-900/50 transition-colors"
                 >
                   {tag}
-                  <button onClick={() => onRemoveTag(file.id, tag)} className="ml-1 hover:text-red-900">
+                  <button onClick={() => onRemoveTag(file.id, tag)} className="ml-1 hover:text-primary-900 dark:hover:text-primary-100">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
@@ -108,31 +108,31 @@ export const FileCard: React.FC<FileCardProps> = ({
             <div className="relative">
               <button
                 onClick={() => setShowActions(!showActions)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
                 aria-label="More actions"
               >
                 <MoreVertical className="w-4 h-4" />
               </button>
 
               {showActions && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">
                   <button
                     onClick={handleCopyCID}
-                    className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     {copySuccess ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
                     <span>{copySuccess ? 'Copied!' : 'Copy CID'}</span>
                   </button>
                   <button
                     onClick={() => setIsAddingTag(true)}
-                    className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     <Tag className="w-4 h-4" />
                     <span>Add Tag</span>
                   </button>
                   <button
                     onClick={handleDownload}
-                    className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     <Download className="w-4 h-4" />
                     <span>Download</span>
@@ -168,10 +168,10 @@ export const FileCard: React.FC<FileCardProps> = ({
 
   // Grid View Card
   return (
-    <div className={`bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 group ${
-      isSelected ? 'border-red-500' : 'border-gray-200'
+    <div className={`bg-white dark:bg-gray-800 border rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 group ${
+      isSelected ? 'border-primary-500' : 'border-gray-200 dark:border-gray-700'
     }`}>
-      <div className="aspect-square bg-gray-50 flex items-center justify-center text-4xl relative">
+      <div className="aspect-square bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-4xl relative">
         {showSelection && (
           <div className="absolute top-2 left-2 z-10">
             <input
@@ -186,29 +186,29 @@ export const FileCard: React.FC<FileCardProps> = ({
         <img src={previewUrl} className='h-full w-full py-20 p-10' />}
         <div className="absolute top-2 right-2">
           {file.isPublic ? (
-            <Globe className="w-4 h-4 text-gray-400" />
+            <Globe className="w-4 h-4 text-gray-400 dark:text-gray-500" />
           ) : (
-            <Lock className="w-4 h-4 text-gray-400" />
+            <Lock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
           )}
         </div>
 
         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100 space-x-4">
           <a href={previewUrl} target="_blank" rel="noopener noreferrer"
-            className="p-2 bg-white rounded-full text-sm shadow-md hover:shadow-lg transition-all duration-200"
+            className="p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-full text-sm shadow-md hover:shadow-lg transition-all duration-200"
             title="Preview file"
           >
             Preview
           </a>
           <button
             onClick={handleCopyCID}
-            className="p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-all duration-200"
+            className="p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-full shadow-md hover:shadow-lg transition-all duration-200"
             title="Copy CID"
           >
             {copySuccess ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
           </button>
           <button
             onClick={handleDownload}
-            className="p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-all duration-200"
+            className="p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-full shadow-md hover:shadow-lg transition-all duration-200"
             title="Download"
           >
             <Download className="w-4 h-4" />
@@ -217,9 +217,9 @@ export const FileCard: React.FC<FileCardProps> = ({
       </div>
 
       <div className="p-4">
-        <h3 className="font-medium text-gray-900 truncate mb-2">{cidStr}</h3>
+        <h3 className="font-medium text-gray-900 dark:text-white truncate mb-2">{cidStr}</h3>
 
-        <div className="space-y-2 text-sm text-gray-500">
+        <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
           <div className="flex justify-between">
             <span>Size</span>
             <span>{formatFileSize(file.size)}</span>
@@ -237,9 +237,9 @@ export const FileCard: React.FC<FileCardProps> = ({
         <div className="mt-3">
           <div className="flex flex-wrap gap-1 mb-2">
             {(file.tags ?? []).map(tag => (
-              <span key={tag} className="inline-flex items-center px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
+              <span key={tag} className="inline-flex items-center px-2 py-1 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-300 rounded-full">
                 {tag}
-                <button onClick={() => onRemoveTag(file.id, tag)} className="ml-1 hover:text-red-900">
+                <button onClick={() => onRemoveTag(file.id, tag)} className="ml-1 hover:text-primary-900 dark:hover:text-primary-100">
                   <X className="w-3 h-3" />
                 </button>
               </span>
@@ -253,19 +253,19 @@ export const FileCard: React.FC<FileCardProps> = ({
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
                 placeholder="Enter tag"
-                className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-red-500 focus:border-transparent"
+                className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded focus:ring-1 focus:ring-primary-500 focus:border-transparent"
                 onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
                 autoFocus
               />
               <button onClick={handleAddTag} className="p-1 text-green-600 hover:text-green-700">
                 <Check className="w-4 h-4" />
               </button>
-              <button onClick={() => setIsAddingTag(false)} className="p-1 text-gray-400 hover:text-gray-600">
+              <button onClick={() => setIsAddingTag(false)} className="p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
                 <X className="w-4 h-4" />
               </button>
             </div>
           ) : (
-            <button onClick={() => setIsAddingTag(true)} className="flex items-center space-x-1 text-xs text-red-600 hover:text-red-700 transition-colors">
+            <button onClick={() => setIsAddingTag(true)} className="flex items-center space-x-1 text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors">
               <Tag className="w-3 h-3" />
               <span>Add tag</span>
             </button>
