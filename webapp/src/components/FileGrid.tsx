@@ -41,10 +41,10 @@ export const FileGrid: React.FC<FileGridProps> = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             {files.length} {files.length === 1 ? 'file' : 'files'}
           </h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Total size: {totalSize > 0 && formatFileSize(totalSize)}
           </p>
         </div>
@@ -54,8 +54,8 @@ export const FileGrid: React.FC<FileGridProps> = ({
             onClick={() => onViewModeChange('grid')}
             className={`p-2 rounded-lg transition-all duration-200 ${
               viewMode === 'grid'
-                ? 'bg-red-100 text-red-600'
-                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
             aria-label="Grid View"
           >
@@ -65,8 +65,8 @@ export const FileGrid: React.FC<FileGridProps> = ({
             onClick={() => onViewModeChange('list')}
             className={`p-2 rounded-lg transition-all duration-200 ${
               viewMode === 'list'
-                ? 'bg-red-100 text-red-600'
-                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
             aria-label="List View"
           >
@@ -78,8 +78,8 @@ export const FileGrid: React.FC<FileGridProps> = ({
       {files.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">📂</div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No files found</h3>
-          <p className="text-gray-500">Try adjusting your search or filters</p>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No files found</h3>
+          <p className="text-gray-500 dark:text-gray-400">Try adjusting your search or filters</p>
         </div>
       ) : (
         <div className={

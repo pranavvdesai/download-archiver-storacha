@@ -1,5 +1,6 @@
 import React from 'react';
 import { AuthProvider } from './components/AuthProvider';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { SignInForm } from './components/SignInForm';
 import { Dashboard } from './components/Dashboard';
 import { useAuth } from './hooks/useAuth';
@@ -9,8 +10,8 @@ const AppContent: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
     );
   }
@@ -20,9 +21,11 @@ const AppContent: React.FC = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
