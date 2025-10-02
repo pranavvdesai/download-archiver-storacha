@@ -1,9 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, Files, Activity, HardDrive } from 'lucide-react';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { FileGrid } from './FileGrid';
 import { BulkOperationsToolbar } from './BulkOperationsToolbar';
+import { ActivityTimeline } from './ActivityTimeline.tsx';
+import { StorageAnalytics } from './StorageAnalytics';
 import { FilterState, ViewMode, StorachaFile } from '../types';
 import { getClient } from '../hooks/useAuth';
 import { decodeCidToString } from '../utils/decodeCidToString';
@@ -15,6 +17,7 @@ export const Dashboard: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<'files' | 'activity' | 'storage'>('files');
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     fileType: 'all',
@@ -24,20 +27,18 @@ export const Dashboard: React.FC = () => {
     sortOrder: 'desc'
   });
 
-  // Map upload API response to StorachaFile[]
   function mapUploadsToFiles(uploadResponse: any[]): any[] {
     return uploadResponse.map((upload, index) => ({
-      id: upload.root['/'],            // use root CID as ID
+      id: upload.root['/'],           
       cid: upload.root['/'],
-      name: `File ${index + 1}`,       // fabricate name as no name in response
-      size: 0,                        // no size info in response, default to 0 or fetch if available
+      name: `File ${index + 1}`,      
+      size: 0,                       
       created: new Date(upload.insertedAt).getTime(),
       updated: new Date(upload.updatedAt).getTime(),
       shards: upload.shards.map((shard: any) => shard['/']),
     }));
   }
 
-  // Call client upload list once on mount
   async function listFiles() {
     setIsLoading(true);
     try {
@@ -116,24 +117,72 @@ export const Dashboard: React.FC = () => {
               </button>
             </div>
 
-            <BulkOperationsToolbar
-              selectedFiles={selectedFiles}
-              onAddTags={() => {}}
-              onRemoveTags={() => {}}
-              onClearSelection={handleClearSelection}
-            />
+            <div className="mb-6">
+              <div className="border-b border-gray-200">
+                <nav className="-mb-px flex space-x-8">
+                  <button
+                    onClick={() => setActiveTab('files')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                      activeTab === 'files'
+                        ? 'border-red-500 text-red-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <Files className="w-4 h-4" />
+                    <span>Files</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('activity')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                      activeTab === 'activity'
+                        ? 'border-red-500 text-red-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <Activity className="w-4 h-4" />
+                    <span>Activity</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('storage')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                      activeTab === 'storage'
+                        ? 'border-red-500 text-red-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <HardDrive className="w-4 h-4" />
+                    <span>Storage</span>
+                  </button>
+                </nav>
+              </div>
+            </div>
 
-            <FileGrid
-              files={filteredFiles}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-              onAddTag={() => {}}
-              onRemoveTag={() => {}}
-              isLoading={isLoading}
-              selectedFiles={selectedFiles}
-              onSelectionChange={handleSelectionChange}
-              showSelection={true}
-            />
+            {activeTab === 'files' ? (
+              <>
+                <BulkOperationsToolbar
+                  selectedFiles={selectedFiles}
+                  onAddTags={() => {}}
+                  onRemoveTags={() => {}}
+                  onClearSelection={handleClearSelection}
+                />
+
+                <FileGrid
+                  files={filteredFiles}
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                  onAddTag={() => {}}
+                  onRemoveTag={() => {}}
+                  isLoading={isLoading}
+                  selectedFiles={selectedFiles}
+                  onSelectionChange={handleSelectionChange}
+                  showSelection={true}
+                />
+              </>
+            ) : activeTab === 'activity' ? (
+              <ActivityTimeline />
+            ) : (
+              <StorageAnalytics files={files} />
+            )}
           </div>
         </main>
       </div>
