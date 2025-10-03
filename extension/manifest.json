@@ -3,13 +3,13 @@
   "name": "DownloadArchiver",
   "version": "1.0",
   "description": "Auto-upload your Chrome downloads to your Storacha Space",
-  "permissions": ["downloads", "storage", "notifications"],
+  "permissions": ["downloads", "storage", "notifications", "activeTab"],
   "host_permissions": ["https://*/*", "http://*/*"],
   "background": {
     "service_worker": "background.js",
     "type": "module"
   },
-   "icons": {
+  "icons": {
     "16": "icons/16.png",
     "48": "icons/48.png",
     "128": "icons/128.png"
@@ -22,5 +22,11 @@
       "128": "icons/128.png"
     }
   },
-  "options_page": "options.html"
+  "options_page": "options.html",
+  "web_accessible_resources": [
+    {
+      "resources": ["api.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
