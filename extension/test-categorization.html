@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>File Categorization Test</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+      :root {
+        --primary: #ff4b26;
+        --primary-dark: #e63e1c;
+        --secondary: #2d3748;
+        --accent: #ffd600;
+        --background: #f7fafc;
+        --text: #1a202c;
+        --text-light: #4a5568;
+        --border: #e2e8f0;
+        --success: #48bb78;
+        --error: #f56565;
+        --transition-fast: 0.2s ease;
+        --transition-medium: 0.3s ease;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--background);
+        color: var(--text);
+        line-height: 1.6;
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, var(--primary), var(--accent));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      h2 {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: var(--text);
+        margin: 2rem 0 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 4px solid var(--accent);
+        display: inline-block;
+      }
+
+      .test-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+          0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+      }
+
+      .test-section:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+
+      .file-info {
+        background: linear-gradient(
+          135deg,
+          rgba(255, 75, 38, 0.05),
+          rgba(255, 214, 0, 0.05)
+        );
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 8px;
+        border: 2px solid var(--border);
+        transition: all var(--transition-medium);
+      }
+
+      .file-info:hover {
+        border-color: var(--primary);
+        transform: translateY(-1px);
+      }
+
+      .tags {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin: 0.75rem 0;
+      }
+
+      .tag {
+        background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        box-shadow: 0 2px 4px rgba(255, 75, 38, 0.2);
+        transition: all var(--transition-fast);
+      }
+
+      .tag:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 6px rgba(255, 75, 38, 0.3);
+      }
+
+      .category {
+        font-weight: 600;
+        color: var(--primary);
+        font-size: 1.1rem;
+      }
+
+      .folder {
+        color: var(--text-light);
+        font-style: italic;
+        font-weight: 500;
+      }
+
+      input[type="file"] {
+        width: 100%;
+        padding: 0.75rem;
+        margin: 1rem 0;
+        background-color: var(--background);
+        border: 2px dashed var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all var(--transition-medium);
+        font-family: "Inter", sans-serif;
+      }
+
+      input[type="file"]:hover {
+        border-color: var(--primary);
+        background-color: rgba(255, 75, 38, 0.05);
+      }
+
+      button {
+        background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all var(--transition-medium);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 2px 4px rgba(255, 75, 38, 0.2);
+        font-family: "Inter", sans-serif;
+      }
+
+      button:hover {
+        background: linear-gradient(45deg, var(--primary-dark), var(--primary));
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(255, 75, 38, 0.25);
+      }
+
+      button:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 2px rgba(255, 75, 38, 0.2);
+      }
+
+      .file-name {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: var(--text);
+        margin-bottom: 0.5rem;
+      }
+
+      .file-size {
+        color: var(--text-light);
+        font-size: 0.9rem;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+
+      .section-header svg {
+        color: var(--primary);
+      }
+
+      .branding {
+        margin-bottom: 2rem;
+        padding: 2rem;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 75, 38, 0.1),
+          rgba(255, 214, 0, 0.1)
+        );
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+          0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        text-align: center;
+      }
+
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-light);
+        margin-top: 0.5rem;
+      }
+
+      #results,
+      #sampleResults {
+        margin-top: 1rem;
+      }
+
+      .empty-state {
+        text-align: center;
+        color: var(--text-light);
+        font-style: italic;
+        padding: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="branding">
+      <h1>Enhanced File Categorization Test</h1>
+      <p class="subtitle">
+        Test the new auto-categorization, tagging, and folder organization
+        features
+      </p>
+    </div>
+
+    <div class="test-section">
+      <div class="section-header">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+          ></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+        <h2>Test File Categorization</h2>
+      </div>
+      <p>
+        Select files to see how they would be categorized, tagged, and
+        organized:
+      </p>
+      <input type="file" id="fileInput" multiple />
+      <div id="results">
+        <div class="empty-state">
+          No files selected yet. Choose files above to see categorization
+          results.
+        </div>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <div class="section-header">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        <h2>Sample File Tests</h2>
+      </div>
+      <p>
+        Test with pre-defined sample files to see the categorization system in
+        action:
+      </p>
+      <button onclick="testSampleFiles()">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M5 3l14 9-14 9V3z"></path>
+        </svg>
+        Run Sample Tests
+      </button>
+      <div id="sampleResults"></div>
+    </div>
+
+    <script>
+      // Include the enhanced RuleEngine (simplified version for testing)
+      class RuleEngine {
+        constructor() {
+          this.categoryMap = {
+            document: ["pdf", "doc", "docx", "txt", "rtf", "odt", "pages"],
+            spreadsheet: ["xls", "xlsx", "csv", "ods", "numbers"],
+            presentation: ["ppt", "pptx", "odp", "key"],
+            image: [
+              "jpg",
+              "jpeg",
+              "png",
+              "gif",
+              "webp",
+              "svg",
+              "bmp",
+              "tiff",
+              "ico",
+            ],
+            video: ["mp4", "avi", "mov", "mkv", "wmv", "flv", "webm", "m4v"],
+            audio: ["mp3", "wav", "flac", "aac", "ogg", "wma", "m4a"],
+            archive: ["zip", "rar", "7z", "tar", "gz", "bz2", "xz"],
+            executable: ["exe", "msi", "dmg", "deb", "rpm", "app"],
+            code: [
+              "js",
+              "ts",
+              "py",
+              "java",
+              "cpp",
+              "c",
+              "cs",
+              "php",
+              "rb",
+              "go",
+              "rs",
+            ],
+            web: ["html", "css", "js", "json", "xml", "svg"],
+            data: ["json", "xml", "csv", "sql", "db", "sqlite"],
+            font: ["ttf", "otf", "woff", "woff2", "eot"],
+            other: [],
+          };
+        }
+
+        getExtension(filePath) {
+          const match = filePath.match(/\.([^.]+)$/);
+          return match ? match[1].toLowerCase() : "";
+        }
+
+        getFileCategory(extension) {
+          for (const [category, extensions] of Object.entries(
+            this.categoryMap
+          )) {
+            if (extensions.includes(extension.toLowerCase())) {
+              return category;
+            }
+          }
+          return "other";
+        }
+
+        generateAutoTags(filePath, fileSizeMB) {
+          const extension = this.getExtension(filePath);
+          const category = this.getFileCategory(extension);
+          const fileName = filePath.split("/").pop().toLowerCase();
+          const tags = new Set();
+
+          tags.add(category);
+
+          if (fileSizeMB < 1) tags.add("small");
+          else if (fileSizeMB < 10) tags.add("medium");
+          else if (fileSizeMB < 100) tags.add("large");
+          else tags.add("huge");
+
+          if (extension) tags.add(extension);
+
+          const contentKeywords = {
+            screenshot: ["screenshot", "screen", "capture"],
+            download: ["download", "dl"],
+            backup: ["backup", "bak", "copy"],
+            temp: ["temp", "tmp", "temporary"],
+            draft: ["draft", "wip", "work-in-progress"],
+            final: ["final", "finished", "complete"],
+            invoice: ["invoice", "bill", "receipt"],
+            report: ["report", "summary", "analysis"],
+            presentation: ["presentation", "slides", "deck"],
+            tutorial: ["tutorial", "guide", "howto", "instructions"],
+            personal: ["personal", "private"],
+            work: ["work", "business", "office"],
+          };
+
+          for (const [tag, keywords] of Object.entries(contentKeywords)) {
+            if (keywords.some((keyword) => fileName.includes(keyword))) {
+              tags.add(tag);
+            }
+          }
+
+          const now = new Date();
+          const year = now.getFullYear();
+          const month = now
+            .toLocaleString("default", { month: "long" })
+            .toLowerCase();
+          tags.add(year.toString());
+          tags.add(month);
+
+          return Array.from(tags);
+        }
+
+        suggestFolder(filePath, category, tags) {
+          if (tags.includes("work") || tags.includes("business")) return "Work";
+          if (tags.includes("personal") || tags.includes("private"))
+            return "Personal";
+          if (tags.includes("screenshot")) return "Screenshots";
+          if (tags.includes("download")) return "Downloads";
+          if (tags.includes("backup")) return "Backups";
+          if (tags.includes("temp") || tags.includes("temporary"))
+            return "Temporary";
+
+          switch (category) {
+            case "document":
+              return "Documents";
+            case "image":
+              return "Images";
+            case "video":
+              return "Videos";
+            case "audio":
+              return "Audio";
+            case "archive":
+              return "Archives";
+            case "code":
+              return "Code";
+            case "executable":
+              return "Software";
+            default:
+              return "Miscellaneous";
+          }
+        }
+      }
+
+      const ruleEngine = new RuleEngine();
+
+      function displayFileInfo(fileName, fileSize, container) {
+        const fileSizeMB = fileSize / (1024 * 1024);
+        const extension = ruleEngine.getExtension(fileName);
+        const category = ruleEngine.getFileCategory(extension);
+        const autoTags = ruleEngine.generateAutoTags(fileName, fileSizeMB);
+        const suggestedFolder = ruleEngine.suggestFolder(
+          fileName,
+          category,
+          autoTags
+        );
+
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "file-info";
+        fileDiv.innerHTML = `
+                <div class="file-name">${fileName}</div>
+                <div class="file-size">${fileSizeMB.toFixed(2)} MB</div>
+                <div style="margin: 0.5rem 0;">
+                    <span class="category">Category: ${category}</span>
+                </div>
+                <div style="margin: 0.5rem 0;">
+                    <span class="folder">Suggested Folder: ${suggestedFolder}</span>
+                </div>
+                <div class="tags">
+                    ${autoTags
+                      .map((tag) => `<span class="tag">${tag}</span>`)
+                      .join("")}
+                </div>
+            `;
+        container.appendChild(fileDiv);
+      }
+
+      document
+        .getElementById("fileInput")
+        .addEventListener("change", function (e) {
+          const results = document.getElementById("results");
+          results.innerHTML = "";
+
+          Array.from(e.target.files).forEach((file) => {
+            displayFileInfo(file.name, file.size, results);
+          });
+        });
+
+      function testSampleFiles() {
+        const sampleFiles = [
+          { name: "screenshot-2024-01-15.png", size: 2.5 * 1024 * 1024 },
+          { name: "work-presentation-final.pptx", size: 15 * 1024 * 1024 },
+          { name: "personal-backup.zip", size: 150 * 1024 * 1024 },
+          { name: "tutorial-video.mp4", size: 500 * 1024 * 1024 },
+          { name: "invoice-january-2024.pdf", size: 0.5 * 1024 * 1024 },
+          { name: "temp-download.tmp", size: 0.1 * 1024 * 1024 },
+          { name: "project-code.js", size: 0.05 * 1024 * 1024 },
+          { name: "music-collection.mp3", size: 8 * 1024 * 1024 },
+        ];
+
+        const container = document.getElementById("sampleResults");
+        container.innerHTML = "";
+
+        sampleFiles.forEach((file) => {
+          displayFileInfo(file.name, file.size, container);
+        });
+      }
+    </script>
+  </body>
+</html>

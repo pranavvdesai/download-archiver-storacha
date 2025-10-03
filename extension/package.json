@@ -5,7 +5,7 @@
   "scripts": {
     "clean": "rimraf dist",
     "copy-assets": "copyfiles \"icons/**/*\" \"*.html\" \"manifest.json\" dist/",
-    "build:js": "esbuild background.js popup.js options.js --bundle --platform=browser --format=esm --define:process.env={} --outdir=dist --minify",
+    "build:js": "esbuild background.js popup.js options.js api.js --bundle --platform=browser --format=esm --define:process.env={} --outdir=dist --minify",
     "build": "npm run clean && npm run build:js && npm run copy-assets"
   },
   "keywords": [],

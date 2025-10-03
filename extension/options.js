@@ -1,4 +1,4 @@
-// Rule Engine v2 - Enhanced rule system with deny/include/size/type precedence
+// Enhanced Rule Engine v3 - With categorization, folders, and tagging
 class RuleEngine {
   constructor() {
     this.mimeTypeMap = {
@@ -7,17 +7,71 @@ class RuleEngine {
       jpeg: "image/jpeg",
       png: "image/png",
       gif: "image/gif",
+      webp: "image/webp",
+      svg: "image/svg+xml",
       txt: "text/plain",
       doc: "application/msword",
       docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       xls: "application/vnd.ms-excel",
       xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      ppt: "application/vnd.ms-powerpoint",
+      pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
       zip: "application/zip",
+      rar: "application/x-rar-compressed",
+      "7z": "application/x-7z-compressed",
+      tar: "application/x-tar",
+      gz: "application/gzip",
       mp4: "video/mp4",
+      avi: "video/x-msvideo",
+      mov: "video/quicktime",
+      mkv: "video/x-matroska",
       mp3: "audio/mpeg",
+      wav: "audio/wav",
+      flac: "audio/flac",
       exe: "application/x-executable",
+      msi: "application/x-msi",
+      dmg: "application/x-apple-diskimage",
       bat: "application/x-bat",
+      sh: "application/x-sh",
       tmp: "application/x-temp",
+      json: "application/json",
+      xml: "application/xml",
+      csv: "text/csv",
+      js: "text/javascript",
+      css: "text/css",
+      html: "text/html",
+      py: "text/x-python",
+      java: "text/x-java-source",
+      cpp: "text/x-c++src",
+      c: "text/x-csrc",
+    };
+
+    this.categoryMap = {
+      document: ["pdf", "doc", "docx", "txt", "rtf", "odt", "pages"],
+      spreadsheet: ["xls", "xlsx", "csv", "ods", "numbers"],
+      presentation: ["ppt", "pptx", "odp", "key"],
+      image: ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "tiff", "ico"],
+      video: ["mp4", "avi", "mov", "mkv", "wmv", "flv", "webm", "m4v"],
+      audio: ["mp3", "wav", "flac", "aac", "ogg", "wma", "m4a"],
+      archive: ["zip", "rar", "7z", "tar", "gz", "bz2", "xz"],
+      executable: ["exe", "msi", "dmg", "deb", "rpm", "app"],
+      code: [
+        "js",
+        "ts",
+        "py",
+        "java",
+        "cpp",
+        "c",
+        "cs",
+        "php",
+        "rb",
+        "go",
+        "rs",
+      ],
+      web: ["html", "css", "js", "json", "xml", "svg"],
+      data: ["json", "xml", "csv", "sql", "db", "sqlite"],
+      font: ["ttf", "otf", "woff", "woff2", "eot"],
+      other: [],
     };
   }
 
@@ -72,6 +126,100 @@ class RuleEngine {
     return patterns.some((pattern) =>
       this.matchesPattern(filePath, pattern.trim())
     );
+  }
+
+  getFileCategory(extension) {
+    for (const [category, extensions] of Object.entries(this.categoryMap)) {
+      if (extensions.includes(extension.toLowerCase())) {
+        return category;
+      }
+    }
+    return "other";
+  }
+
+  generateAutoTags(filePath, fileSizeMB, metadata = {}) {
+    const extension = this.getExtension(filePath);
+    const category = this.getFileCategory(extension);
+    const fileName = filePath.split("/").pop().toLowerCase();
+    const tags = new Set();
+
+    // Category-based tags
+    tags.add(category);
+
+    // Size-based tags
+    if (fileSizeMB < 1) tags.add("small");
+    else if (fileSizeMB < 10) tags.add("medium");
+    else if (fileSizeMB < 100) tags.add("large");
+    else tags.add("huge");
+
+    // Extension tag
+    if (extension) tags.add(extension);
+
+    // Content-based tags from filename
+    const contentKeywords = {
+      screenshot: ["screenshot", "screen", "capture"],
+      download: ["download", "dl"],
+      backup: ["backup", "bak", "copy"],
+      temp: ["temp", "tmp", "temporary"],
+      draft: ["draft", "wip", "work-in-progress"],
+      final: ["final", "finished", "complete"],
+      invoice: ["invoice", "bill", "receipt"],
+      report: ["report", "summary", "analysis"],
+      presentation: ["presentation", "slides", "deck"],
+      tutorial: ["tutorial", "guide", "howto", "instructions"],
+      personal: ["personal", "private"],
+      work: ["work", "business", "office"],
+    };
+
+    for (const [tag, keywords] of Object.entries(contentKeywords)) {
+      if (keywords.some((keyword) => fileName.includes(keyword))) {
+        tags.add(tag);
+      }
+    }
+
+    // Date-based tags
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now
+      .toLocaleString("default", { month: "long" })
+      .toLowerCase();
+    tags.add(year.toString());
+    tags.add(month);
+
+    return Array.from(tags);
+  }
+
+  suggestFolder(filePath, category, tags) {
+    const fileName = filePath.split("/").pop().toLowerCase();
+
+    // Priority-based folder suggestions
+    if (tags.includes("work") || tags.includes("business")) return "Work";
+    if (tags.includes("personal") || tags.includes("private"))
+      return "Personal";
+    if (tags.includes("screenshot")) return "Screenshots";
+    if (tags.includes("download")) return "Downloads";
+    if (tags.includes("backup")) return "Backups";
+    if (tags.includes("temp") || tags.includes("temporary")) return "Temporary";
+
+    // Category-based folders
+    switch (category) {
+      case "document":
+        return "Documents";
+      case "image":
+        return "Images";
+      case "video":
+        return "Videos";
+      case "audio":
+        return "Audio";
+      case "archive":
+        return "Archives";
+      case "code":
+        return "Code";
+      case "executable":
+        return "Software";
+      default:
+        return "Miscellaneous";
+    }
   }
 
   // UPDATED: No test size override. Uses actual file.size only.
@@ -156,11 +304,24 @@ class RuleEngine {
       }
     }
 
+    // Generate metadata for allowed files
+    const category = this.getFileCategory(extension);
+    const autoTags = this.generateAutoTags(filePath, sizeMB);
+    const suggestedFolder = this.suggestFolder(filePath, category, autoTags);
+
     return {
       allowed: true,
       reason: `Allowed: included by ${includeReason}, size ${sizeMB.toFixed(
         2
       )}MB is within limits`,
+      metadata: {
+        category,
+        extension,
+        mimeType,
+        autoTags,
+        suggestedFolder,
+        fileSizeMB: sizeMB,
+      },
     };
   }
 }
