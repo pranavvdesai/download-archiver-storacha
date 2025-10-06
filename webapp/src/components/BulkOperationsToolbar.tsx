@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Tag, X, Check } from 'lucide-react';
+import { showSuccess } from '../utils/toast';
 
 interface BulkOperationsToolbarProps {
   selectedFiles: string[];
@@ -20,6 +21,7 @@ export const BulkOperationsToolbar: React.FC<BulkOperationsToolbarProps> = ({
   const handleAddTag = () => {
     if (newTag.trim()) {
       onAddTags(selectedFiles, newTag.trim());
+      showSuccess(`Tag "${newTag.trim()}" added to ${selectedFiles.length} file(s)!`);
       setNewTag('');
       setIsAddingTag(false);
     }
@@ -27,6 +29,7 @@ export const BulkOperationsToolbar: React.FC<BulkOperationsToolbarProps> = ({
 
   const handleRemoveTag = (tag: string) => {
     onRemoveTags(selectedFiles, tag);
+    showSuccess(`Tag "${tag}" removed from ${selectedFiles.length} file(s)!`);
   };
 
   if (selectedFiles.length === 0) {

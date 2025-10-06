@@ -3,6 +3,7 @@ import { Copy, Download, Tag, Globe, Lock, MoreVertical, Check, X } from 'lucide
 import { StorachaFile } from '../types';
 import { formatFileSize, formatDate, getFileTypeIcon, copyToClipboard } from '../utils/fileUtils';
 import { decodeCidToString } from '../utils/decodeCidToString';
+import { showSuccess, showError } from '../utils/toast';
 
 interface FileCardProps {
   file: StorachaFile;
@@ -35,23 +36,32 @@ export const FileCard: React.FC<FileCardProps> = ({
     const success = await copyToClipboard(cidStr);
     if (success) {
       setCopySuccess(true);
+      showSuccess('CID copied to clipboard!');
       setTimeout(() => setCopySuccess(false), 2000);
+    } else {
+      showError('Failed to copy CID to clipboard');
     }
   };
 
   const handleAddTag = () => {
     if (newTag.trim()) {
       onAddTag(file.id, newTag.trim());
+      showSuccess(`Tag "${newTag.trim()}" added successfully!`);
       setNewTag('');
       setIsAddingTag(false);
     }
   };
 
   const handleDownload = () => {
-    const a = document.createElement('a');
-    a.href = previewUrl;
-    a.download = cidStr || 'file';
-    a.click();
+    try {
+      const a = document.createElement('a');
+      a.href = previewUrl;
+      a.download = cidStr || 'file';
+      a.click();
+      showSuccess('Download started!');
+    } catch (error) {
+      showError('Failed to start download');
+    }
   };
 
   if (viewMode === 'list') {
@@ -98,7 +108,10 @@ export const FileCard: React.FC<FileCardProps> = ({
                   className="inline-flex items-center px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full group-hover:bg-red-200 transition-colors"
                 >
                   {tag}
-                  <button onClick={() => onRemoveTag(file.id, tag)} className="ml-1 hover:text-red-900">
+                  <button onClick={() => {
+                    onRemoveTag(file.id, tag);
+                    showSuccess(`Tag "${tag}" removed successfully!`);
+                  }} className="ml-1 hover:text-red-900">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
@@ -239,7 +252,10 @@ export const FileCard: React.FC<FileCardProps> = ({
             {(file.tags ?? []).map(tag => (
               <span key={tag} className="inline-flex items-center px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
                 {tag}
-                <button onClick={() => onRemoveTag(file.id, tag)} className="ml-1 hover:text-red-900">
+                <button onClick={() => {
+                  onRemoveTag(file.id, tag);
+                  showSuccess(`Tag "${tag}" removed successfully!`);
+                }} className="ml-1 hover:text-red-900">
                   <X className="w-3 h-3" />
                 </button>
               </span>
