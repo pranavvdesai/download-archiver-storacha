@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { LogOut, User, Search } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { LogoutModal } from './LogoutModal';
+import { showSuccess } from '../utils/toast';
 
 interface HeaderProps {
   searchQuery: string;
@@ -66,6 +67,7 @@ export const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange }) =
         onClose={() => setIsLogoutModalOpen(false)}
         onConfirm={() => {
           signOut();
+          showSuccess('Logged out successfully!');
           setIsLogoutModalOpen(false);
         }}
       />
