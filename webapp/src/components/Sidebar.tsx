@@ -42,7 +42,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const newTags = filters.tags.includes(tag)
       ? filters.tags.filter(t => t !== tag)
       : [...filters.tags, tag];
-    
     onFiltersChange({ ...filters, tags: newTags });
   };
 
@@ -74,33 +73,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const getDateRangeLabel = (range: string) => {
     switch (range) {
-      case 'today':
-        return 'Today';
-      case 'week':
-        return 'Past Week';
-      case 'month':
-        return 'Past Month';
-      default:
-        return 'All Time';
+      case 'today': return 'Today';
+      case 'week': return 'Past Week';
+      case 'month': return 'Past Month';
+      default: return 'All Time';
     }
   };
 
   const getFileTypeLabel = (type: string) => {
     switch (type) {
-      case 'document':
-        return 'Documents';
-      case 'archive':
-        return 'Archives';
-      case 'image':
-        return 'Images';
-      case 'video':
-        return 'Videos';
-      case 'audio':
-        return 'Audio';
-      case 'data':
-        return 'Data';
-      default:
-        return 'All Files';
+      case 'document': return 'Documents';
+      case 'archive': return 'Archives';
+      case 'image': return 'Images';
+      case 'video': return 'Videos';
+      case 'audio': return 'Audio';
+      case 'data': return 'Data';
+      default: return 'All Files';
     }
   };
 
@@ -131,44 +119,47 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div 
           className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={onClose}
+          aria-hidden="true"
         />
       )}
 
       <aside className={`
         fixed lg:static inset-y-0 left-0 z-50 lg:z-0
-        w-80 bg-white border-r border-gray-200 
+        w-80 bg-white border-r border-gray-200
         transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Filter className="w-5 h-5 text-gray-600" />
-              <h2 className="font-semibold text-gray-900">Filters</h2>
-            </div>
-            <div className="flex items-center space-x-2">
-              {hasActiveFilters && (
-                <button
-                  onClick={clearFilters}
-                  className="text-sm text-red-600 hover:text-red-700 transition-colors"
-                >
-                  Clear all
-                </button>
-              )}
+        flex flex-col
+      `} aria-label="Filters Sidebar">
+
+        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Filter className="w-5 h-5 text-gray-600" />
+            <h2 className="font-semibold text-gray-900 text-lg">Filters</h2>
+          </div>
+          <div className="flex items-center space-x-2">
+            {hasActiveFilters && (
               <button
-                onClick={onClose}
-                className="lg:hidden p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                onClick={clearFilters}
+                className="text-sm text-red-600 hover:text-red-700 transition-colors"
+                aria-label="Clear all filters"
               >
-                <X className="w-5 h-5" />
+                Clear all
               </button>
-            </div>
+            )}
+            <button
+              onClick={onClose}
+              className="lg:hidden p-1 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Close filters"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
-        <div className="p-6 space-y-6 overflow-y-auto h-full pb-20">
+        <div className="p-6 flex-1 overflow-y-auto space-y-6">
           {/* Active Filters */}
           {hasActiveFilters && (
-            <div className="space-y-3 animate-in">
+            <section className="space-y-3 animate-in" aria-label="Active filters">
               <h3 className="font-medium text-gray-900">Active Filters</h3>
               <div className="flex flex-wrap gap-2">
                 {filters.search && (
@@ -178,6 +169,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <button
                       onClick={() => handleRemoveFilter('search')}
                       className="ml-2 text-gray-500 hover:text-gray-700"
+                      aria-label={`Remove search filter: ${filters.search}`}
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -191,6 +183,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <button
                       onClick={() => handleRemoveFilter('fileType')}
                       className="ml-2 text-blue-600 hover:text-blue-700"
+                      aria-label={`Remove file type filter: ${getFileTypeLabel(filters.fileType)}`}
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -204,6 +197,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <button
                       onClick={() => handleRemoveFilter('dateRange')}
                       className="ml-2 text-green-600 hover:text-green-700"
+                      aria-label={`Remove date range filter: ${getDateRangeLabel(filters.dateRange)}`}
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -220,6 +214,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <button
                       onClick={() => handleRemoveFilter('tags', tag)}
                       className="ml-2 text-purple-600 hover:text-purple-700"
+                      aria-label={`Remove tag filter: ${tag}`}
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -231,11 +226,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   {getSortLabel()}
                 </span>
               </div>
-            </div>
+            </section>
           )}
 
           {/* File Types */}
-          <div>
+          <section aria-label="File type filters">
             <h3 className="font-medium text-gray-900 mb-3">File Types</h3>
             <div className="space-y-2">
               {fileTypes.map(({ value, label, icon: Icon, count }) => (
@@ -247,6 +242,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       ? 'bg-red-50 text-red-700 border border-red-200'
                       : 'hover:bg-gray-50 text-gray-700'
                   }`}
+                  aria-pressed={filters.fileType === value}
                 >
                   <div className="flex items-center space-x-3">
                     <Icon className="w-4 h-4" />
@@ -258,10 +254,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </button>
               ))}
             </div>
-          </div>
+          </section>
 
           {/* Date Range */}
-          <div>
+          <section aria-label="Date range filters">
             <h3 className="font-medium text-gray-900 mb-3">Date Range</h3>
             <div className="space-y-2">
               {dateRanges.map(({ value, label }) => (
@@ -273,45 +269,48 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       ? 'bg-red-50 text-red-700 border border-red-200'
                       : 'hover:bg-gray-50 text-gray-700'
                   }`}
+                  aria-pressed={filters.dateRange === value}
                 >
                   <Calendar className="w-4 h-4" />
                   <span className="text-sm">{label}</span>
                 </button>
               ))}
             </div>
-          </div>
+          </section>
 
           {/* Tags */}
-          <div>
+          <section aria-label="Tag filters">
             <h3 className="font-medium text-gray-900 mb-3">Tags</h3>
             <div className="space-y-2 max-h-60 overflow-y-auto">
-              {allTags.map((tag) => (
-                <button
-                  key={tag}
-                  onClick={() => toggleTag(tag)}
-                  className={`w-full flex items-center justify-between p-2 rounded-lg text-left transition-all duration-200 ${
-                    filters.tags.includes(tag)
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : 'hover:bg-gray-50 text-gray-700'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <Tag className="w-4 h-4" />
-                    <span className="text-sm">{tag}</span>
-                  </div>
-                  <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">
-                    {files.filter(f => f.tags.includes(tag)).length}
-                  </span>
-                </button>
-              ))}
-              {allTags.length === 0 && (
+              {allTags.length > 0 ? (
+                allTags.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => toggleTag(tag)}
+                    className={`w-full flex items-center justify-between p-2 rounded-lg text-left transition-all duration-200 ${
+                      filters.tags.includes(tag)
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'hover:bg-gray-50 text-gray-700'
+                    }`}
+                    aria-pressed={filters.tags.includes(tag)}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Tag className="w-4 h-4" />
+                      <span className="text-sm">{tag}</span>
+                    </div>
+                    <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">
+                      {files.filter(f => f.tags.includes(tag)).length}
+                    </span>
+                  </button>
+                ))
+              ) : (
                 <p className="text-sm text-gray-500">No tags available</p>
               )}
             </div>
-          </div>
+          </section>
 
           {/* Sort Options */}
-          <div>
+          <section aria-label="Sort options">
             <h3 className="font-medium text-gray-900 mb-3">Sort By</h3>
             <select
               value={`${filters.sortBy}-${filters.sortOrder}`}
@@ -320,6 +319,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onFiltersChange({ ...filters, sortBy, sortOrder });
               }}
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+              aria-label="Sort files"
             >
               <option value="date-desc">Newest First</option>
               <option value="date-asc">Oldest First</option>
@@ -330,7 +330,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <option value="downloads-desc">Most Downloaded</option>
               <option value="downloads-asc">Least Downloaded</option>
             </select>
-          </div>
+          </section>
         </div>
       </aside>
     </>

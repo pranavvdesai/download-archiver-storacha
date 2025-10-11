@@ -1,8 +1,11 @@
 export interface User {
+  id: string;
+  name: string;
+  avatar?: string;
+  lastActivity: number;
+  sessionExpiry: number;
   email: `${string}`;
   spaceDid?: `did:${string}:${string}`;
-  avatar: string;
-  name?: string;
   role?: SpaceRole;
 }
 
@@ -64,7 +67,7 @@ export interface StorachaFile {
   size: number;
   type: string;
   mimeType: string;
-  uploadedAt: Date;
+  created: Date;
   tags: string[];
   isPublic: boolean;
   downloadCount: number;
