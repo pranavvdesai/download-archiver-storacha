@@ -3,6 +3,9 @@ import { Menu } from 'lucide-react';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { FileGrid } from './FileGrid';
+import { MobileFileCard } from './MobileFileCard';
+import { MobileNavigation } from './MobileNavigation';
+import { MobileUpload } from './MobileUpload';
 import { BulkOperationsToolbar } from './BulkOperationsToolbar';
 import { FilterState, ViewMode, StorachaFile } from '../types';
 import { getClient } from '../hooks/useAuth';
@@ -15,6 +18,8 @@ export const Dashboard: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const [showSearch, setShowSearch] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     fileType: 'all',
@@ -88,12 +93,30 @@ export const Dashboard: React.FC = () => {
     setSelectedFiles([]);
   };
 
+  const handleUpload = async (uploadFiles: File[]) => {
+    console.log('Uploading files:', uploadFiles);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header 
-        searchQuery={filters.search}
-        onSearchChange={handleSearchChange}
-      />
+      <div className="hidden lg:block">
+        <Header 
+          searchQuery={filters.search}
+          onSearchChange={handleSearchChange}
+        />
+      </div>
+
+      <div className="lg:hidden">
+        <MobileNavigation
+          onSearchToggle={() => setShowSearch(!showSearch)}
+          onFilterToggle={() => setSidebarOpen(true)}
+          onViewModeChange={setViewMode}
+          viewMode={viewMode}
+          searchQuery={filters.search}
+          onSearchChange={handleSearchChange}
+          showSearch={showSearch}
+        />
+      </div>
       
       <div className="flex">
         <Sidebar
@@ -105,7 +128,7 @@ export const Dashboard: React.FC = () => {
         />
 
         <main className="flex-1 lg:ml-0">
-          <div className="p-6">
+          <div className="p-4 lg:p-6">
             <div className="lg:hidden mb-4">
               <button
                 onClick={() => setSidebarOpen(true)}
@@ -123,20 +146,56 @@ export const Dashboard: React.FC = () => {
               onClearSelection={handleClearSelection}
             />
 
-            <FileGrid
-              files={filteredFiles}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-              onAddTag={() => {}}
-              onRemoveTag={() => {}}
-              isLoading={isLoading}
-              selectedFiles={selectedFiles}
-              onSelectionChange={handleSelectionChange}
-              showSelection={true}
-            />
+            <div className="hidden lg:block">
+              <FileGrid
+                files={filteredFiles}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                onAddTag={() => {}}
+                onRemoveTag={() => {}}
+                isLoading={isLoading}
+                selectedFiles={selectedFiles}
+                onSelectionChange={handleSelectionChange}
+                showSelection={true}
+              />
+            </div>
+
+            <div className="lg:hidden">
+              {isLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+                </div>
+              ) : filteredFiles.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">📂</div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No files found</h3>
+                  <p className="text-gray-500">Try adjusting your search or filters</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredFiles.map((file) => (
+                    <MobileFileCard
+                      key={file.id}
+                      file={file}
+                      onAddTag={() => {}}
+                      onRemoveTag={() => {}}
+                      isSelected={selectedFiles.includes(file.id)}
+                      onSelectionChange={handleSelectionChange}
+                      showSelection={true}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </main>
       </div>
+
+      <MobileUpload
+        isOpen={showUpload}
+        onClose={() => setShowUpload(false)}
+        onUpload={handleUpload}
+      />
     </div>
   );
 };
