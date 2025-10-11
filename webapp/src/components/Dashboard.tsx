@@ -4,12 +4,9 @@ import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { FileGrid } from './FileGrid';
 import { BulkOperationsToolbar } from './BulkOperationsToolbar';
-import { SpaceManagement } from './SpaceManagement';
 import { FilterState, ViewMode, StorachaFile } from '../types';
 import { getClient } from '../hooks/useAuth';
 import { decodeCidToString } from '../utils/decodeCidToString';
-
-type DashboardView = "files" | "space";
 
 export const Dashboard: React.FC = () => {
   const [files, setFiles] = useState<StorachaFile[]>([]);
@@ -17,7 +14,6 @@ export const Dashboard: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-  const [currentView, setCurrentView] = useState<DashboardView>("files");
   const [filters, setFilters] = useState<FilterState>({
     search: "",
     fileType: "all",
@@ -89,18 +85,11 @@ export const Dashboard: React.FC = () => {
     setSelectedFiles([]);
   };
 
-  if (currentView === "space") {
-    return <SpaceManagement />;
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Header
         searchQuery={filters.search}
         onSearchChange={handleSearchChange}
-        onSpaceManagement={() => setCurrentView("space")}
-        onBackToFiles={() => setCurrentView("files")}
-        currentView={currentView}
       />
 
       <div className="flex">
