@@ -8,20 +8,19 @@ import { FilterState, ViewMode, StorachaFile } from '../types';
 import { getClient } from '../hooks/useAuth';
 import { decodeCidToString } from '../utils/decodeCidToString';
 
-
 export const Dashboard: React.FC = () => {
   const [files, setFiles] = useState<StorachaFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [filters, setFilters] = useState<FilterState>({
-    search: '',
-    fileType: 'all',
-    dateRange: 'all',
+    search: "",
+    fileType: "all",
+    dateRange: "all",
     tags: [],
-    sortBy: 'date',
-    sortOrder: 'desc'
+    sortBy: "date",
+    sortOrder: "desc",
   });
 
   // Map upload API response to StorachaFile[]
@@ -77,10 +76,8 @@ export const Dashboard: React.FC = () => {
   
 
   const handleSelectionChange = (fileId: string, selected: boolean) => {
-    setSelectedFiles(prev => 
-      selected 
-        ? [...prev, fileId]
-        : prev.filter(id => id !== fileId)
+    setSelectedFiles((prev) =>
+      selected ? [...prev, fileId] : prev.filter((id) => id !== fileId)
     );
   };
 
@@ -90,11 +87,11 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header 
+      <Header
         searchQuery={filters.search}
         onSearchChange={handleSearchChange}
       />
-      
+
       <div className="flex">
         <Sidebar
           files={files}
