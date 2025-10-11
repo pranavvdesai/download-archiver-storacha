@@ -7,11 +7,6 @@ import * as Delegation from "@ucanto/core/delegation";
 let client;
 let spaceDid;
 
-const SESSION_TIMEOUT = 15 * 60 * 1000; // 15 minutes in milliseconds
-let lastActivity = Date.now();
-let sessionExpiry = Date.now() + SESSION_TIMEOUT;
-let isSessionValid = true;
-
 // Rule Engine v2 - Same implementation as in options.js
 class RuleEngine {
   constructor() {
@@ -225,36 +220,36 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === "CONFIG") {
     initClient(msg.email, msg.spaceDid)
-      .then((did) => {
-        updateActivity(); 
-        sendResponse({ ok: true, spaceDid: did });
-      })
+      .then((did) => sendResponse({ ok: true, spaceDid: did }))
       .catch((err) => {
         console.error("CONFIG initClient failed:", err);
         sendResponse({ ok: false, error: err.message });
       });
     return true;
   }
-
-  if (msg.type === "CHECK_SESSION") {
-    const isValid = checkSessionValidity();
-    if (isValid) {
-      updateActivity(); 
-    } else {
-      handleSessionTimeout();
+  
+  if (msg.type === "SELECT_SPACE") {
+    if (!client) {
+      sendResponse({ ok: false, error: "Client not initialized" });
+      return false;
     }
-    sendResponse({ isValid });
-    return true;
-  }
-
-  if (msg.type === "REAUTH") {
-    initClient(msg.email, msg.spaceDid)
-      .then((did) => {
-        updateActivity(); 
-        sendResponse({ ok: true, spaceDid: did });
+    
+    const spaces = client.spaces();
+    const space = spaces.find(s => s.did() === msg.spaceDid);
+    
+    if (!space) {
+      sendResponse({ ok: false, error: "Space not found" });
+      return false;
+    }
+    
+    client.setCurrentSpace(msg.spaceDid)
+      .then(() => {
+        spaceDid = msg.spaceDid;
+        chrome.storage.local.set({ spaceDid });
+        sendResponse({ ok: true, spaceDid });
       })
       .catch((err) => {
-        console.error("REAUTH initClient failed:", err);
+        console.error("SELECT_SPACE failed:", err);
         sendResponse({ ok: false, error: err.message });
       });
     return true;
@@ -277,24 +272,31 @@ async function initClient(email, savedSpaceDid) {
   await account.plan.wait();
   console.log("[DownloadArchiver] Plan ready");
 
+  const existing = client.spaces();
+  
   if (savedSpaceDid) {
-    spaceDid = savedSpaceDid;
-    console.log("[DownloadArchiver] Reusing saved spaceDid:", spaceDid);
-    await client.setCurrentSpace(spaceDid);
-    return spaceDid;
+    const savedSpace = existing.find(s => s.did() === savedSpaceDid);
+    if (savedSpace) {
+      spaceDid = savedSpaceDid;
+      console.log("[DownloadArchiver] Reusing saved spaceDid:", spaceDid);
+      await client.setCurrentSpace(spaceDid);
+      return spaceDid;
+    } else {
+      console.log("[DownloadArchiver] Saved space not found:", savedSpaceDid);
+    }
   }
 
-  const existing = client.spaces();
+  // Try to find or create download-vault space
   const vault = existing.find((s) => s.name === "download-vault");
   if (vault) {
     spaceDid = vault.did();
-    console.log("[DownloadArchiver] Found existing space:", spaceDid);
+    console.log("[DownloadArchiver] Using default space:", spaceDid);
     await client.setCurrentSpace(spaceDid);
   } else {
-    console.log('[DownloadArchiver] Creating space "download-vault" …');
+    console.log('[DownloadArchiver] Creating default space "download-vault"...');
     const space = await client.createSpace("download-vault", { account });
     spaceDid = space.did();
-    console.log("[DownloadArchiver] Created space:", spaceDid);
+    console.log("[DownloadArchiver] Created default space:", spaceDid);
     await client.setCurrentSpace(spaceDid);
   }
 
@@ -318,58 +320,16 @@ async function initClient(email, savedSpaceDid) {
   return spaceDid;
 }
 
-function updateActivity() {
-  lastActivity = Date.now();
-  sessionExpiry = Date.now() + SESSION_TIMEOUT;
-  isSessionValid = true;
-  chrome.storage.local.set({ lastActivity, sessionExpiry });
-}
-
-function checkSessionValidity() {
-  const now = Date.now();
-  const isExpired = now >= sessionExpiry;
-  const isInactive = (now - lastActivity) >= SESSION_TIMEOUT;
-  isSessionValid = !isExpired && !isInactive;
-  return isSessionValid;
-}
-
-async function handleSessionTimeout() {
-  if (!isSessionValid) {
-    client = null;
-    
-    chrome.notifications.create({
-      type: "basic",
-      iconUrl: chrome.runtime.getURL("icons/48.png"),
-      title: "Session Expired",
-      message: "Your session has expired. Please re-authenticate to continue using the extension.",
-    });
-
-    chrome.runtime.sendMessage({ type: "SESSION_EXPIRED" });
-  }
-}
-
 async function ensureClientReady() {
-  const stored = await chrome.storage.local.get(["email", "spaceDid", "lastActivity", "sessionExpiry"]);
-  const { email, spaceDid: storedDid, lastActivity: storedLastActivity, sessionExpiry: storedSessionExpiry } = stored;
+  const stored = await chrome.storage.local.get(["email", "spaceDid"]);
+  const { email, spaceDid: storedDid } = stored;
 
   if (!email) throw new Error("Not configured");
-
-  if (storedLastActivity && storedSessionExpiry) {
-    lastActivity = storedLastActivity;
-    sessionExpiry = storedSessionExpiry;
-  }
-
-  if (!checkSessionValidity()) {
-    await handleSessionTimeout();
-    throw new Error("Session expired");
-  }
 
   if (!client || !client.currentSpace()) {
     console.log("[DownloadArchiver] ensureClientReady: re-initializing");
     await initClient(email, storedDid || null);
   }
-
-  updateActivity();
 }
 
 // Context menu click handler
@@ -710,13 +670,6 @@ chrome.downloads.onChanged.addListener(async (delta) => {
 
   if (delta.state?.current !== "complete") return;
   console.log("[DownloadArchiver] Download complete, id=", delta.id);
-
-  if (!checkSessionValidity()) {
-    await handleSessionTimeout();
-    return;
-  }
-  
-  updateActivity();
 
   try {
     await ensureClientReady();
