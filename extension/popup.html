@@ -1,81 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>DownloadArchiver</title>
-    <style>
-      body {
-        font-family: sans-serif;
-        width: 350px;
-        padding: 1rem;
-        margin: 0;
-      }
-      #status {
-        margin-bottom: 1rem;
-        white-space: pre-wrap;
-        font-size: 0.9rem;
-      }
-      button {
-        padding: 0.5rem 1rem;
-        margin-right: 0.5rem;
-        background: #ff4915;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-      }
-      button:hover {
-        background: #e63e0f;
-      }
-      .upload-history {
-        margin-top: 1rem;
-        max-height: 200px;
-        overflow-y: auto;
-      }
-      .upload-item {
-        padding: 0.5rem;
-        margin: 0.25rem 0;
-        background: #f5f5f5;
-        border-radius: 4px;
-        font-size: 0.8rem;
-      }
-      .upload-filename {
-        font-weight: bold;
-        color: #333;
-      }
-      .upload-cid {
-        color: #666;
-        font-family: monospace;
-        word-break: break-all;
-      }
-      .upload-meta {
-        color: #888;
-        font-size: 0.7rem;
-      }
-      .no-history {
-        text-align: center;
-        color: #888;
-        font-style: italic;
-        padding: 1rem;
-      }
-      h3 {
-        margin: 1rem 0 0.5rem 0;
-        font-size: 1rem;
-        color: #333;
-      }
-    </style>
-  </head>
-  <body>
-    <h2>DownloadArchiver</h2>
-    <div id="status">Initializing…</div>
-    <button id="openOptions">⚙️ Options</button>
-    <button id="clearHistory">🗑️ Clear History</button>
-
-    <h3>Recent Uploads</h3>
-    <div id="uploadHistory" class="upload-history">
-      <div class="no-history">No uploads yet</div>
+<head>
+  <meta charset="UTF-8" />
+  <title>DownloadArchiver</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      width: 360px;
+      margin: 0;
+      padding: 0;
+      background: #f8f9fa;
+    }
+    .container {
+      padding: 16px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .logo {
+      width: 24px;
+      height: 24px;
+      margin-right: 8px;
+    }
+    h2 {
+      margin: 0;
+      color: #212529;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .status-card {
+      background: white;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .status-label {
+      font-size: 12px;
+      color: #6c757d;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .status-value {
+      color: #212529;
+      font-size: 14px;
+      word-break: break-all;
+    }
+    .button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      background: #228be6;
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-bottom: 8px;
+    }
+    .button:hover {
+      background: #1c7ed6;
+    }
+    .button.secondary {
+      background: #868e96;
+    }
+    .button.secondary:hover {
+      background: #6c757d;
+    }
+    .button svg {
+      margin-right: 8px;
+    }
+    .not-configured {
+      text-align: center;
+      color: #868e96;
+      padding: 24px 0;
+    }
+    h3 {
+      margin: 16px 0 8px 0;
+      font-size: 14px;
+      color: #495057;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .upload-history {
+      max-height: 250px;
+      overflow-y: auto;
+    }
+    .upload-item {
+      background: white;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .upload-filename {
+      font-weight: 600;
+      color: #212529;
+      font-size: 13px;
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+    .upload-cid {
+      color: #495057;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 11px;
+      word-break: break-all;
+      margin-bottom: 4px;
+    }
+    .upload-meta {
+      color: #868e96;
+      font-size: 11px;
+    }
+    .no-history {
+      text-align: center;
+      color: #868e96;
+      font-style: italic;
+      padding: 16px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="icons/16.png" alt="Logo" class="logo">
+      <h2>DownloadArchiver</h2>
     </div>
+    <div id="content">
+      <div id="status" class="status-card">Initializing…</div>
+      <button id="openOptions" class="button">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 5a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6.5 8a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0z" fill="currentColor"/>
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M7.21 0h1.58c.86 0 1.57.66 1.63 1.52l.1 1.37c.07.21.15.41.24.61l1.25-.58c.78-.36 1.69-.05 2.12.69l.8 1.36c.43.74.24 1.68-.44 2.18l-1.1.82c.01.14.01.29.01.43s0 .29-.01.43l1.1.82c.68.5.87 1.44.44 2.18l-.8 1.36c-.43.74-1.34 1.05-2.12.69l-1.25-.58c-.09.2-.17.4-.24.61l-.1 1.37c-.06.86-.77 1.52-1.63 1.52H7.21c-.86 0-1.57-.66-1.63-1.52l-.1-1.37c-.07-.21-.15-.41-.24-.61l-1.25.58c-.78.36-1.69.05-2.12-.69l-.8-1.36c-.43-.74-.24-1.68.44-2.18l1.1-.82c-.01-.14-.01-.29-.01-.43s0-.29.01-.43l-1.1-.82c-.68-.5-.87-1.44-.44-2.18l.8-1.36c.43-.74 1.34-1.05 2.12-.69l1.25.58c.09-.2.17-.4.24-.61l.1-1.37C5.64.66 6.35 0 7.21 0z" fill="currentColor"/>
+        </svg>
+        Configure Settings
+      </button>
+      <button id="clearHistory" class="button secondary">
+        Clear History
+      </button>
 
-    <script src="popup.js"></script>
-  </body>
+      <h3>Recent Uploads</h3>
+      <div id="uploadHistory" class="upload-history">
+        <div class="no-history">No uploads yet</div>
+      </div>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
 </html>

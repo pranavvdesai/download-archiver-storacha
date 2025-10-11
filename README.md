@@ -190,6 +190,12 @@ We welcome contributions! Here’s the quickest way to be helpful:
   - **Reproduction** (steps, sample file/rule)
   - **Expected vs Actual**
   - **Logs** (from Service Worker console)
+ 
+- To pick up an issue:
+
+  - Comment and ask for issues to be assigned.
+  - Start working once assigned
+    
 
 ### Dev Workflow
 

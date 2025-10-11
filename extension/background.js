@@ -7,6 +7,11 @@ import * as Delegation from "@ucanto/core/delegation";
 let client;
 let spaceDid;
 
+const SESSION_TIMEOUT = 15 * 60 * 1000; // 15 minutes in milliseconds
+let lastActivity = Date.now();
+let sessionExpiry = Date.now() + SESSION_TIMEOUT;
+let isSessionValid = true;
+
 // Rule Engine v2 - Same implementation as in options.js
 class RuleEngine {
   constructor() {
@@ -220,9 +225,36 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === "CONFIG") {
     initClient(msg.email, msg.spaceDid)
-      .then((did) => sendResponse({ ok: true, spaceDid: did }))
+      .then((did) => {
+        updateActivity(); 
+        sendResponse({ ok: true, spaceDid: did });
+      })
       .catch((err) => {
         console.error("CONFIG initClient failed:", err);
+        sendResponse({ ok: false, error: err.message });
+      });
+    return true;
+  }
+
+  if (msg.type === "CHECK_SESSION") {
+    const isValid = checkSessionValidity();
+    if (isValid) {
+      updateActivity(); 
+    } else {
+      handleSessionTimeout();
+    }
+    sendResponse({ isValid });
+    return true;
+  }
+
+  if (msg.type === "REAUTH") {
+    initClient(msg.email, msg.spaceDid)
+      .then((did) => {
+        updateActivity(); 
+        sendResponse({ ok: true, spaceDid: did });
+      })
+      .catch((err) => {
+        console.error("REAUTH initClient failed:", err);
         sendResponse({ ok: false, error: err.message });
       });
     return true;
@@ -286,16 +318,58 @@ async function initClient(email, savedSpaceDid) {
   return spaceDid;
 }
 
+function updateActivity() {
+  lastActivity = Date.now();
+  sessionExpiry = Date.now() + SESSION_TIMEOUT;
+  isSessionValid = true;
+  chrome.storage.local.set({ lastActivity, sessionExpiry });
+}
+
+function checkSessionValidity() {
+  const now = Date.now();
+  const isExpired = now >= sessionExpiry;
+  const isInactive = (now - lastActivity) >= SESSION_TIMEOUT;
+  isSessionValid = !isExpired && !isInactive;
+  return isSessionValid;
+}
+
+async function handleSessionTimeout() {
+  if (!isSessionValid) {
+    client = null;
+    
+    chrome.notifications.create({
+      type: "basic",
+      iconUrl: chrome.runtime.getURL("icons/48.png"),
+      title: "Session Expired",
+      message: "Your session has expired. Please re-authenticate to continue using the extension.",
+    });
+
+    chrome.runtime.sendMessage({ type: "SESSION_EXPIRED" });
+  }
+}
+
 async function ensureClientReady() {
-  const stored = await chrome.storage.local.get(["email", "spaceDid"]);
-  const { email, spaceDid: storedDid } = stored;
+  const stored = await chrome.storage.local.get(["email", "spaceDid", "lastActivity", "sessionExpiry"]);
+  const { email, spaceDid: storedDid, lastActivity: storedLastActivity, sessionExpiry: storedSessionExpiry } = stored;
 
   if (!email) throw new Error("Not configured");
+
+  if (storedLastActivity && storedSessionExpiry) {
+    lastActivity = storedLastActivity;
+    sessionExpiry = storedSessionExpiry;
+  }
+
+  if (!checkSessionValidity()) {
+    await handleSessionTimeout();
+    throw new Error("Session expired");
+  }
 
   if (!client || !client.currentSpace()) {
     console.log("[DownloadArchiver] ensureClientReady: re-initializing");
     await initClient(email, storedDid || null);
   }
+
+  updateActivity();
 }
 
 // Context menu click handler
@@ -636,6 +710,13 @@ chrome.downloads.onChanged.addListener(async (delta) => {
 
   if (delta.state?.current !== "complete") return;
   console.log("[DownloadArchiver] Download complete, id=", delta.id);
+
+  if (!checkSessionValidity()) {
+    await handleSessionTimeout();
+    return;
+  }
+  
+  updateActivity();
 
   try {
     await ensureClientReady();

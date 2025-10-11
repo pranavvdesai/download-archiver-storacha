@@ -4,216 +4,706 @@
 <head>
   <meta charset="UTF-8" />
   <title>DownloadArchiver Options</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.tailwindcss.com">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    :root {
+      --primary: #FF4B26;
+      --primary-dark: #E63E1C;
+      --secondary: #2D3748;
+      --accent: #FFD600;
+      --background: #F7FAFC;
+      --text: #1A202C;
+      --text-light: #4A5568;
+      --border: #E2E8F0;
+      --success: #48BB78;
+      --error: #F56565;
+      --transition-fast: 0.2s ease;
+      --transition-medium: 0.3s ease;
+      --transition-slow: 0.5s ease;
+      --bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(-20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.05);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    .animate-in {
+      animation: fadeIn var(--transition-medium) forwards;
+    }
+
+    .slide-in {
+      animation: slideIn var(--transition-medium) forwards;
+    }
+
     body {
-      font-family: sans-serif;
-      padding: 1rem;
-      background-color: #ffffff;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25'%3E%3Cdefs%3E%3ClinearGradient id='a' gradientUnits='userSpaceOnUse' x1='0' x2='0' y1='0' y2='100%25' gradientTransform='rotate(193,1280,659)'%3E%3Cstop offset='0' stop-color='%23ffffff'/%3E%3Cstop offset='1' stop-color='%23FF4915'/%3E%3C/linearGradient%3E%3Cpattern patternUnits='userSpaceOnUse' id='b' width='609' height='507.5' x='0' y='0' viewBox='0 0 1080 900'%3E%3Cg fill-opacity='0.05'%3E%3Cpolygon fill='%23444' points='90 150 0 300 180 300'/%3E%3Cpolygon points='90 150 180 0 0 0'/%3E%3Cpolygon fill='%23AAA' points='270 150 360 0 180 0'/%3E%3Cpolygon fill='%23DDD' points='450 150 360 300 540 300'/%3E%3Cpolygon fill='%23999' points='450 150 540 0 360 0'/%3E%3Cpolygon points='630 150 540 300 720 300'/%3E%3Cpolygon fill='%23DDD' points='630 150 720 0 540 0'/%3E%3Cpolygon fill='%23444' points='810 150 720 300 900 300'/%3E%3Cpolygon fill='%23FFF' points='810 150 900 0 720 0'/%3E%3Cpolygon fill='%23DDD' points='990 150 900 300 1080 300'/%3E%3Cpolygon fill='%23444' points='990 150 1080 0 900 0'/%3E%3Cpolygon fill='%23DDD' points='90 450 0 600 180 600'/%3E%3Cpolygon points='90 450 180 300 0 300'/%3E%3Cpolygon fill='%23666' points='270 450 180 600 360 600'/%3E%3Cpolygon fill='%23AAA' points='270 450 360 300 180 300'/%3E%3Cpolygon fill='%23DDD' points='450 450 360 600 540 600'/%3E%3Cpolygon fill='%23999' points='450 450 540 300 360 300'/%3E%3Cpolygon fill='%23999' points='630 450 540 600 720 600'/%3E%3Cpolygon fill='%23FFF' points='630 450 720 300 540 300'/%3E%3Cpolygon points='810 450 720 600 900 600'/%3E%3Cpolygon fill='%23DDD' points='810 450 900 300 720 300'/%3E%3Cpolygon fill='%23AAA' points='990 450 900 600 1080 600'/%3E%3Cpolygon fill='%23444' points='990 450 1080 300 900 300'/%3E%3Cpolygon fill='%23222' points='90 750 0 900 180 900'/%3E%3Cpolygon points='270 750 180 900 360 900'/%3E%3Cpolygon fill='%23DDD' points='270 750 360 600 180 600'/%3E%3Cpolygon points='450 750 540 600 360 600'/%3E%3Cpolygon points='630 750 540 900 720 900'/%3E%3Cpolygon fill='%23444' points='630 750 720 600 540 600'/%3E%3Cpolygon fill='%23AAA' points='810 750 720 900 900 900'/%3E%3Cpolygon fill='%23666' points='810 750 900 600 720 600'/%3E%3Cpolygon fill='%23999' points='990 750 900 900 1080 900'/%3E%3Cpolygon fill='%23999' points='180 0 90 150 270 150'/%3E%3Cpolygon fill='%23444' points='360 0 270 150 450 150'/%3E%3Cpolygon fill='%23FFF' points='540 0 450 150 630 150'/%3E%3Cpolygon points='900 0 810 150 990 150'/%3E%3Cpolygon fill='%23222' points='0 300 -90 450 90 450'/%3E%3Cpolygon fill='%23FFF' points='0 300 90 150 -90 150'/%3E%3Cpolygon fill='%23FFF' points='180 300 90 450 270 450'/%3E%3Cpolygon fill='%23666' points='180 300 270 150 90 150'/%3E%3Cpolygon fill='%23222' points='360 300 270 450 450 450'/%3E%3Cpolygon fill='%23FFF' points='360 300 450 150 270 150'/%3E%3Cpolygon fill='%23444' points='540 300 450 450 630 450'/%3E%3Cpolygon fill='%23222' points='540 300 630 150 450 150'/%3E%3Cpolygon fill='%23AAA' points='720 300 630 450 810 450'/%3E%3Cpolygon fill='%23666' points='720 300 810 150 630 150'/%3E%3Cpolygon fill='%23FFF' points='900 300 810 450 990 450'/%3E%3Cpolygon fill='%23999' points='900 300 990 150 810 150'/%3E%3Cpolygon points='0 600 -90 750 90 750'/%3E%3Cpolygon fill='%23666' points='0 600 90 450 -90 450'/%3E%3Cpolygon fill='%23AAA' points='180 600 90 750 270 750'/%3E%3Cpolygon fill='%23444' points='180 600 270 450 90 450'/%3E%3Cpolygon fill='%23444' points='360 600 270 750 450 750'/%3E%3Cpolygon fill='%23999' points='360 600 450 450 270 450'/%3E%3Cpolygon fill='%23666' points='540 600 630 450 450 450'/%3E%3Cpolygon fill='%23222' points='720 600 630 750 810 750'/%3E%3Cpolygon fill='%23FFF' points='900 600 810 750 990 750'/%3E%3Cpolygon fill='%23222' points='900 600 990 450 810 450'/%3E%3Cpolygon fill='%23DDD' points='0 900 90 750 -90 750'/%3E%3Cpolygon fill='%23444' points='180 900 270 750 90 750'/%3E%3Cpolygon fill='%23FFF' points='360 900 450 750 270 750'/%3E%3Cpolygon fill='%23AAA' points='540 900 630 750 450 750'/%3E%3Cpolygon fill='%23FFF' points='720 900 810 750 630 750'/%3E%3Cpolygon fill='%23222' points='900 900 990 750 810 750'/%3E%3Cpolygon fill='%23222' points='1080 300 990 450 1170 450'/%3E%3Cpolygon fill='%23FFF' points='1080 300 1170 150 990 150'/%3E%3Cpolygon points='1080 600 990 750 1170 750'/%3E%3Cpolygon fill='%23666' points='1080 600 1170 450 990 450'/%3E%3Cpolygon fill='%23DDD' points='1080 900 1170 750 990 750'/%3E%3C/g%3E%3C/pattern%3E%3C/defs%3E%3Crect x='0' y='0' fill='url(%23a)' width='100%25' height='100%25'/%3E%3Crect x='0' y='0' fill='url(%23b)' width='100%25' height='100%25'/%3E%3C/svg%3E");
-      background-attachment: fixed;
-      background-size: cover;
+      font-family: 'Inter', sans-serif;
+      background-color: var(--background);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0;
     }
 
-    .side-image {
-      position: fixed;
-      right: 20px;
-      bottom: 0;
-      height: 70%;
-      z-index: -1;
-      pointer-events: none;
-      height: 80%;
-      width: 600px;
+    .container {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 2rem;
+      position: relative;
     }
 
-    label {
-      display: block;
-      margin-top: 1rem;
-      font-weight: semibold;
-      color: #333;
+    .main-content {
+      padding-right: 2rem;
+    }
+
+    .branding {
+      margin-bottom: 3rem;
+      padding: 2rem;
+      background: linear-gradient(135deg, rgba(255, 75, 38, 0.1), rgba(255, 214, 0, 0.1));
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .logo-icon {
+      width: 64px;
+      height: 64px;
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+      transition: transform 0.3s ease;
+    }
+
+    .logo:hover .logo-icon {
+      transform: scale(1.05) rotate(-5deg);
+    }
+
+    .logo-text {
+      flex: 1;
+    }
+
+    .logo-text h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0;
+      line-height: 1.2;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
       font-size: 1.1rem;
-      margin-bottom: 0.5rem;
-      text-align: left;
-      width: fit-content;
+      color: var(--text-light);
+      margin-top: 0.5rem;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-header svg {
+      color: var(--primary);
+    }
+
+    .input-group {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-group svg {
+      position: absolute;
+      left: 1rem;
+      color: var(--text-light);
+      pointer-events: none;
+    }
+
+    .input-group input {
+      padding-left: 3rem;
+    }
+
+    .account-section {
+      border: 2px solid var(--border);
+      transition: border-color 0.2s ease;
+    }
+
+    .account-section:hover {
+      border-color: var(--primary);
+    }
+
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 2rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 4px solid var(--accent);
+      display: inline-block;
     }
 
     h3 {
-      color: #333;
-      font-size: 1.3rem;
-      margin-bottom: 0.5rem;
-      margin-top: 1.5rem;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 1.5rem 0 1rem;
     }
 
     .rule-section {
-      margin-bottom: 2rem;
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .rule-section:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .info-section {
+      background: linear-gradient(135deg, rgba(255, 75, 38, 0.05), rgba(255, 214, 0, 0.05));
+    }
+
+    .info-content {
+      margin-top: 1rem;
+    }
+
+    .filter-flow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 2rem 0;
       padding: 1rem;
-      background: rgba(255, 255, 255, 0.9);
+      background: white;
       border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .filter-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text);
+    }
+
+    .filter-step svg {
+      color: var(--primary);
+    }
+
+    .filter-step span {
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    .arrow {
+      color: var(--text-light);
+      font-weight: 600;
+    }
+
+    .info-text {
+      color: var(--text-light);
+      line-height: 1.6;
+    }
+
+    .deny-section {
+      border-color: rgba(255, 75, 38, 0.1);
+    }
+
+    .deny-section .section-header svg {
+      color: var(--primary);
+    }
+
+    .allow-section {
+      border-color: rgba(72, 187, 120, 0.1);
+    }
+
+    .allow-section .section-header svg {
+      color: var(--success);
+    }
+
+    .size-section {
+      border-color: rgba(66, 153, 225, 0.1);
+    }
+
+    .size-section .section-header svg {
+      color: #3182ce;
+    }
+
+    .size-inputs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
     }
 
     .rule-group {
       display: grid;
-      gap: 1rem;
+      gap: 1.5rem;
+    }
+
+    label {
+      display: block;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 0.5rem;
     }
 
     input {
-      width: fit-content;
-      padding: 0.5rem;
-      margin-top: 0.25rem;
-      background-color: rgb(224, 221, 221);
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 1rem;
-      color: #333;
-      transition: background-color 0.3s ease;
       width: 100%;
-      max-width: 500px;
-      box-sizing: border-box;
+      padding: 0.75rem 1rem;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+      color: var(--text);
+      background-color: white;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    input:focus {
       outline: none;
-      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
-      margin-top: 10px;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(255, 75, 38, 0.1);
+    }
+
+    input:hover {
+      border-color: var(--primary);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    input[type="file"] {
+      padding: 0.5rem;
+      background-color: var(--background);
+      border: 2px dashed var(--border);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    input[type="file"]:hover {
+      border-color: var(--primary);
+      background-color: rgba(255, 75, 38, 0.05);
+    }
+
+    input[type="number"] {
+      max-width: 200px;
     }
 
     button {
-      margin-top: 1rem;
-      padding: 0.5rem 1rem;
-      background-color: red;
-      border-color: red;
+      background-color: var(--primary);
       color: white;
-      border-radius: 10px;
-      cursor: pointer;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
       border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 2px 4px rgba(255, 75, 38, 0.2);
     }
 
     button:hover {
-      background-color: darkred;
+      background-color: var(--primary-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(255, 75, 38, 0.25);
     }
 
-    .bg-blue-500 {
-      background-color: #ff0000 !important;
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 2px rgba(255, 75, 38, 0.2);
     }
 
-    .bg-blue-500:hover {
-      background-color: #ff0000 !important;
+    button svg {
+      transition: transform 0.2s ease;
+    }
+
+    button:hover svg {
+      transform: scale(1.1);
+    }
+
+    #save {
+      margin-top: 2rem;
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
+      background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+      box-shadow: 0 4px 6px rgba(255, 75, 38, 0.2), 0 1px 3px rgba(255, 75, 38, 0.1);
+    }
+
+    #save:hover {
+      background: linear-gradient(45deg, var(--primary-dark), var(--primary));
+      box-shadow: 0 6px 8px rgba(255, 75, 38, 0.25), 0 2px 4px rgba(255, 75, 38, 0.15);
+    }
+
+    .side-image {
+      position: fixed;
+      right: 2rem;
+      bottom: 2rem;
+      width: 400px;
+      height: auto;
+      z-index: -1;
+      opacity: 0.8;
+      transition: opacity 0.3s ease;
+    }
+
+    .side-image:hover {
+      opacity: 1;
     }
 
     #testResult {
-      font-family: monospace;
+      font-family: 'Inter', monospace;
       font-size: 0.9rem;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 1rem;
     }
 
     .test-pass {
-      background-color: #d1fae5;
-      color: #065f46;
-      border: 1px solid #10b981;
+      background-color: #F0FDF4;
+      color: #166534;
+      border: 1px solid #4ADE80;
     }
 
     .test-fail {
-      background-color: #fee2e2;
-      color: #991b1b;
-      border: 1px solid #ef4444;
+      background-color: #FEF2F2;
+      color: #991B1B;
+      border: 1px solid #F87171;
     }
 
     #status {
       margin-top: 1rem;
-      color: green;
+      padding: 1rem;
+      border-radius: 8px;
+      font-weight: 500;
+    }
+
+    .status-success {
+      background-color: #F0FDF4;
+      color: #166534;
+    }
+
+    .status-error {
+      background-color: #FEF2F2;
+      color: #991B1B;
+    }
+
+    @media (max-width: 1024px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+
+      .side-image {
+        display: none;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+
+      .rule-section {
+        padding: 1rem;
+      }
     }
   </style>
 </head>
 
 <body>
-  <h1>DownloadArchiver Settings</h1>
-  <label>
-    Your Email
-    <input type="email" id="email" placeholder="you@example.com" required />
-  </label>
-    <h2 style="margin-top:2.5rem;margin-bottom:1.5rem;padding-bottom:0.5rem;border-bottom:4px solid #FFD600;color:#222;display:inline-block;">Customise Your Extension</h2>
-  <div class="rule-section">
-  <h3>How uploads are filtered</h3>
-  <p class="text-base text-gray-600 mb-2">
-  <span style="display:block;margin-top:1.5rem;">We check in this order: <b>Blocklist</b> → <b>Allowlist</b> → <b>Size</b> → <b>Type</b>.</span><span style="display:block;margin-top:1rem;"></span>
-  If a file matches your <b>Blocklist</b>, it’s never uploaded. If you set an <b>Allowlist</b>, only files whose path
-  matches it continue. Files over your <b>Size</b> limit are skipped. Finally, only the file <b>Types</b> (extensions)
-  you allow are uploaded.
-  </p>
+  <div class="container">
+    <div class="main-content">
+      <div class="branding animate-in" style="animation-delay: 0.1s;">
+        <div class="logo">
+          <img src="icons/128.png" alt="DownloadArchiver Logo" class="logo-icon" />
+          <div class="logo-text">
+            <h1>DownloadArchiver</h1>
+            <p class="subtitle">Automatically backup your downloads to Storacha</p>
+          </div>
+        </div>
+      </div>
 
-  </div>
+      <div class="rule-section account-section animate-in" style="animation-delay: 0.2s;">
+        <div class="section-header">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <h3>Account Setup</h3>
+        </div>
+        <div class="rule-group">
+          <label>
+            Your Email
+            <div class="input-group">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+              <input type="email" id="email" placeholder="you@example.com" required />
+            </div>
+          </label>
+        </div>
+      </div>
 
-  <!-- Deny Rules -->
-  <div class="rule-section">
-    <h3>Deny Rules (Block these files)</h3>
-    <div class="rule-group">
-      <label>
-        Extensions to deny (e.g., exe,bat,tmp):
-        <input type="text" id="denyExtensions" placeholder="exe,bat,tmp" />
-      </label>
-      <label>
-        MIME types to deny (e.g., application/x-executable):
-        <input type="text" id="denyMimeTypes" placeholder="application/x-executable" />
-      </label>
-      <label>
-        Folder patterns to deny (e.g., */temp/*,*/cache/*):
-        <input type="text" id="denyFolders" placeholder="*/temp/*,*/cache/*" />
-      </label>
+      <h2>Customize Your Extension</h2>
+      
+      <div class="rule-section info-section animate-in" style="animation-delay: 0.3s;">
+        <div class="section-header">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <h3>How uploads are filtered</h3>
+        </div>
+        <div class="info-content">
+          <div class="filter-flow">
+            <div class="filter-step slide-in" style="animation-delay: 0.4s;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 3h18v18H3zM15 9l-6 6m0-6l6 6"></path>
+              </svg>
+              <span>Blocklist</span>
+            </div>
+            <div class="arrow slide-in" style="animation-delay: 0.5s;">→</div>
+            <div class="filter-step slide-in" style="animation-delay: 0.6s;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              <span>Allowlist</span>
+            </div>
+            <div class="arrow slide-in" style="animation-delay: 0.7s;">→</div>
+            <div class="filter-step slide-in" style="animation-delay: 0.8s;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+              </svg>
+              <span>Size</span>
+            </div>
+            <div class="arrow slide-in" style="animation-delay: 0.9s;">→</div>
+            <div class="filter-step slide-in" style="animation-delay: 1s;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              <span>Type</span>
+            </div>
+          </div>
+          <p class="info-text animate-in" style="animation-delay: 1.1s;">
+            Files are checked against each filter in order. If a file matches your <b>Blocklist</b>, it's never uploaded.
+            If you set an <b>Allowlist</b>, only matching files continue. Files outside your <b>Size</b> limits are skipped.
+            Finally, only allowed file <b>Types</b> are uploaded.
+          </p>
+        </div>
+      </div>
+
+      <!-- Deny Rules -->
+      <div class="rule-section deny-section animate-in" style="animation-delay: 1.2s;">
+        <div class="section-header">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+          <h3>Deny Rules (Block these files)</h3>
+        </div>
+        <div class="rule-group">
+          <label>
+            Extensions to deny
+            <div class="input-group">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="9" y1="15" x2="15" y2="15"></line>
+              </svg>
+              <input type="text" id="denyExtensions" placeholder="exe,bat,tmp" />
+            </div>
+          </label>
+          <label>
+            MIME types to deny
+            <div class="input-group">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+              </svg>
+              <input type="text" id="denyMimeTypes" placeholder="application/x-executable" />
+            </div>
+          </label>
+          <label>
+            Folder patterns to deny
+            <div class="input-group">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <input type="text" id="denyFolders" placeholder="*/temp/*,*/cache/*" />
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Include Rules -->
+      <div class="rule-section allow-section animate-in" style="animation-delay: 1.3s;">
+        <div class="section-header">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <h3>Include Rules (Allow these files)</h3>
+        </div>
+        <div class="rule-group">
+          <label>
+            Extensions to include
+            <div class="input-group">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="12" y1="18" x2="12" y2="12"></line>
+                <line x1="9" y1="15" x2="15" y2="15"></line>
+              </svg>
+              <input type="text" id="includeExtensions" placeholder="pdf,jpg,png,*.doc*" />
+            </div>
+          </label>
+          <label>
+            MIME types to include
+            <div class="input-group">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+              </svg>
+              <input type="text" id="includeMimeTypes" placeholder="image/*,application/pdf" />
+            </div>
+          </label>
+          <label>
+            Folder patterns to include
+            <div class="input-group">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <input type="text" id="includeFolders" placeholder="*/Downloads/*,*/Documents/*" />
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Size Rules -->
+      <div class="rule-section size-section animate-in" style="animation-delay: 1.4s;">
+        <div class="section-header">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="12" y1="8" x2="12" y2="16"></line>
+            <line x1="8" y1="12" x2="16" y2="12"></line>
+          </svg>
+          <h3>Size Rules</h3>
+        </div>
+        <div class="rule-group">
+          <div class="size-inputs">
+            <label>
+              Minimum file size (MB)
+              <div class="input-group">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <input type="number" id="minSize" placeholder="0.1" step="0.1" />
+              </div>
+            </label>
+            <label>
+              Maximum file size (MB)
+              <div class="input-group">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <input type="number" id="maxSize" placeholder="100" step="0.1" />
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rule Preview Section -->
+      <div class="rule-section">
+        <h3>Test Your Rules</h3>
+        <div class="rule-group">
+          <label>
+            Upload a file
+            <input type="file" id="testFile" />
+          </label>
+          <div id="uploadedPath"></div>
+          <button type="button" id="testRules">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            Test Rules
+          </button>
+          <div id="testResult"></div>
+        </div>
+      </div>
+
+      <button id="save">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+          <polyline points="17 21 17 13 7 13 7 21"></polyline>
+          <polyline points="7 3 7 8 15 8"></polyline>
+        </svg>
+        Save & Connect
+      </button>
+      <div id="status"></div>
     </div>
-  </div>
 
-  <!-- Include Rules -->
-  <div class="rule-section">
-    <h3>Include Rules (Allow these files)</h3>
-    <div class="rule-group">
-      <label>
-        Extensions to include (e.g., pdf,jpg,png,*.doc*):
-        <input type="text" id="includeExtensions" placeholder="pdf,jpg,png,*.doc*" />
-      </label>
-      <label>
-        MIME types to include (e.g., image/*,application/pdf):
-        <input type="text" id="includeMimeTypes" placeholder="image/*,application/pdf" />
-      </label>
-      <label>
-        Folder patterns to include (e.g., */Downloads/*,*/Documents/*):
-        <input type="text" id="includeFolders" placeholder="*/Downloads/*,*/Documents/*" />
-      </label>
-    </div>
+    <div id="toast-container"></div>
+    <img src="icons/racha.svg" alt="Flame Chicken" class="side-image" />
   </div>
-
-  <!-- Size Rules -->
-  <div class="rule-section">
-    <h3>Size Rules</h3>
-    <div class="rule-group">
-      <label>
-        Minimum file size (MB):
-        <input type="number" id="minSize" placeholder="0.1" step="0.1" />
-      </label>
-      <label>
-        Maximum file size (MB):
-        <input type="number" id="maxSize" placeholder="100" step="0.1" />
-      </label>
-    </div>
-  </div>
-
-  <!-- Rule Preview Section -->
-  <div class="rule-section bg-blue-50 p-4 rounded-lg mb-6">
-    <h3>Test Your Rules</h3>
-    <label>
-      Upload a file:
-      <input type="file" id="testFile" />
-    </label>
-    <div id="uploadedPath" class="mt-2 text-sm text-gray-700"></div>
-    <label>
-      File size (MB):
-      <input type="number" id="testSize" placeholder="5.2" step="0.1" />
-    </label>
-    <button type="button" id="testRules" class="bg-blue-500 text-white">
-      Test Rules
-    </button>
-    <div id="testResult" class="mt-2 p-2 rounded"></div>
-  </div>
-
-  <button id="save">Save & Connect</button>
-  <div id="status"></div>
-  <img src="icons/racha.svg" alt="Flame Chicken" class="side-image" />
 
   <script src="options.js"></script>
 </body>

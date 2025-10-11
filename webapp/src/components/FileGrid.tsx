@@ -1,3 +1,4 @@
+// FileGrid.tsx
 import React from 'react';
 import { Grid, List } from 'lucide-react';
 import { StorachaFile, ViewMode } from '../types';
@@ -10,6 +11,9 @@ interface FileGridProps {
   onAddTag: (fileId: string, tag: string) => void;
   onRemoveTag: (fileId: string, tag: string) => void;
   isLoading: boolean;
+  selectedFiles?: string[];
+  onSelectionChange?: (fileId: string, selected: boolean) => void;
+  showSelection?: boolean;
 }
 
 export const FileGrid: React.FC<FileGridProps> = ({
@@ -18,7 +22,10 @@ export const FileGrid: React.FC<FileGridProps> = ({
   onViewModeChange,
   onAddTag,
   onRemoveTag,
-  isLoading
+  isLoading,
+  selectedFiles = [],
+  onSelectionChange,
+  showSelection = false
 }) => {
   if (isLoading) {
     return (
@@ -28,6 +35,8 @@ export const FileGrid: React.FC<FileGridProps> = ({
     );
   }
 
+  const totalSize = files.reduce((sum, file) => sum + (file.size || 0), 0);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -36,8 +45,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
             {files.length} {files.length === 1 ? 'file' : 'files'}
           </h2>
           <p className="text-sm text-gray-500">
-            Total size: {files.reduce((sum, file) => sum + file.size, 0) > 0 && 
-              formatFileSize(files.reduce((sum, file) => sum + file.size, 0))}
+            Total size: {totalSize > 0 && formatFileSize(totalSize)}
           </p>
         </div>
 
@@ -49,6 +57,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
                 ? 'bg-red-100 text-red-600'
                 : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
             }`}
+            aria-label="Grid View"
           >
             <Grid className="w-5 h-5" />
           </button>
@@ -59,6 +68,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
                 ? 'bg-red-100 text-red-600'
                 : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
             }`}
+            aria-label="List View"
           >
             <List className="w-5 h-5" />
           </button>
@@ -84,6 +94,9 @@ export const FileGrid: React.FC<FileGridProps> = ({
               viewMode={viewMode}
               onAddTag={onAddTag}
               onRemoveTag={onRemoveTag}
+              isSelected={selectedFiles.includes(file.id)}
+              onSelectionChange={onSelectionChange}
+              showSelection={showSelection}
             />
           ))}
         </div>
@@ -92,7 +105,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
   );
 };
 
-// Import formatFileSize function
+// formatFileSize helper function
 const formatFileSize = (bytes: number): string => {
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   if (bytes === 0) return '0 B';
