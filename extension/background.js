@@ -305,7 +305,41 @@ chrome.contextMenus.onClicked.addListener(async (info, _tab) => {
   try {
     await ensureClientReady();
 
-    let url = info.linkUrl || info.srcUrl;
+    let url = null;
+
+    if (info.srcUrl && ["image", "video", "audio"].includes(info.mediaType)) {
+      url = info.srcUrl;
+    }
+
+    if (!url && info.linkUrl) {
+      url = info.linkUrl;
+    }
+
+    if (!url && info.srcUrl) {
+      url = info.srcUrl;
+    }
+
+    if (url) {
+      try {
+        const parsed = new URL(url);
+        const isGoogleRedirect =
+          parsed.hostname.endsWith(".google.com") ||
+          parsed.hostname === "google.com";
+
+        if (isGoogleRedirect) {
+          const redirectUrl =
+            parsed.searchParams.get("imgurl") ||
+            parsed.searchParams.get("url") ||
+            parsed.searchParams.get("q");
+          if (redirectUrl) {
+            url = redirectUrl;
+          }
+        }
+      } catch (parseErr) {
+        console.warn("[DownloadArchiver] Failed to parse URL:", parseErr);
+      }
+    }
+
     if (!url) {
       throw new Error("No URL found for upload");
     }
