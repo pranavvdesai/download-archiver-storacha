@@ -15,6 +15,7 @@
   "dependencies": {
     "@ipld/dag-ucan": "^3.4.5",
     "@ucanto/client": "^9.0.1",
+    "@ucanto/core": "^10.4.0",
     "@web3-storage/w3up-client": "^17.3.0",
     "buffer": "^6.0.3"
   },
@@ -22,5 +23,6 @@
     "copyfiles": "^2.4.1",
     "esbuild": "^0.25.9",
     "rimraf": "^5.0.5"
-  }
+  },
+  "packageManager": "pnpm@8.12.1+sha1.aa961ffce9b6eaa56307d9b5ff7e984f25b7eb58"
 }
