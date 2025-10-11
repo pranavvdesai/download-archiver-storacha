@@ -93,7 +93,7 @@ export const useAuthProvider = (): AuthContextType => {
     };
 
     setUser(updatedUser);
-    localStorage.setItem('storacha_user', JSON.stringify(updatedUser));
+    localStorage.setItem('storacha-session', JSON.stringify(updatedUser));
     setIsSessionFresh(true);
     setNeedsReauth(false);
   };
@@ -153,7 +153,9 @@ export const useAuthProvider = (): AuthContextType => {
 
       const now = Date.now();
       const newUser: User = {
-        email: userEmail,
+        id: userEmail, 
+        name: userEmail.split('@')[0], 
+        email: userEmail, 
         spaceDid: savedSpaceDid || (client.currentSpace())?.did(),
         avatar: generateAvatarUrl(userEmail),
         lastActivity: now,
@@ -200,7 +202,6 @@ export const useAuthProvider = (): AuthContextType => {
     setUser(null);
     setIsSessionFresh(false);
     setNeedsReauth(false);
-    localStorage.removeItem('storacha_user');
     localStorage.removeItem("storacha-session");
     const dbDeleteRequest = indexedDB.deleteDatabase("w3up-client");
 
