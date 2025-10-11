@@ -1,7 +1,63 @@
 export interface User {
+  id: string;
+  name: string;
+  avatar?: string;
+  lastActivity: number;
+  sessionExpiry: number;
   email: `${string}`;
   spaceDid?: `did:${string}:${string}`;
-  avatar: string;
+  role?: SpaceRole;
+}
+
+export type SpaceRole = "owner" | "admin" | "member" | "viewer";
+
+export interface SpaceMember {
+  id: string;
+  email: string;
+  name?: string;
+  avatar?: string;
+  role: SpaceRole;
+  joinedAt: Date;
+  lastActive: Date;
+}
+
+export interface SpaceUsage {
+  storageUsed: number;
+  storageQuota: number;
+  fileCount: number;
+  fileQuota: number;
+  bandwidthUsed: number;
+  bandwidthQuota: number;
+}
+
+export interface SpaceSettings {
+  name: string;
+  description?: string;
+  visibility: "private" | "public" | "team";
+  allowMemberInvites: boolean;
+  requireApproval: boolean;
+  defaultFileVisibility: "private" | "public";
+}
+
+export interface SpaceBackup {
+  id: string;
+  name: string;
+  createdAt: Date;
+  size: number;
+  fileCount: number;
+  type: "manual" | "auto";
+  status: "creating" | "ready" | "failed";
+}
+
+export interface ActivityLogEntry {
+  id: string;
+  userId: string;
+  userName: string;
+  action: string;
+  target: string;
+  details?: string;
+  timestamp: Date;
+  type: "file" | "member" | "settings" | "backup";
 }
 
 export interface StorachaFile {
@@ -11,12 +67,14 @@ export interface StorachaFile {
   size: number;
   type: string;
   mimeType: string;
-  uploadedAt: Date;
+  created: Date;
+  updated?: Date;
+  shards?: string[];
   tags: string[];
   isPublic: boolean;
   downloadCount: number;
   // OCR-related fields
-  ocrStatus:
+  ocrStatus?:
     | "not_processed"
     | "queued"
     | "processing"
@@ -24,6 +82,7 @@ export interface StorachaFile {
     | "failed"
     | "skipped";
   ocrError?: string;
+  ocrText?: string; // Alias for extractedText for backward compatibility
   extractedText?: string;
   textExtractionMethod?: "embedded" | "ocr" | "none";
   processingStartedAt?: Date;
