@@ -138,7 +138,7 @@ export const FileCard: React.FC<FileCardProps> = ({
                   <span>{file.isPublic ? "Public" : "Private"}</span>
                 </span>
                 <span>{file.downloadCount ?? 0} downloads</span>
-                {getOCRStatusIcon(file.ocrStatus) && (
+                {file.ocrStatus && file.ocrStatus !== 'not_processed' && (
                   <span className="flex items-center space-x-1">
                     {getOCRStatusIcon(file.ocrStatus)}
                     <span>{getOCRStatusText(file.ocrStatus)}</span>
@@ -316,7 +316,7 @@ export const FileCard: React.FC<FileCardProps> = ({
             <span>Downloads</span>
             <span>{file.downloadCount ?? 0}</span>
           </div>
-          {getOCRStatusIcon(file.ocrStatus) && (
+          {file.ocrStatus && file.ocrStatus !== 'not_processed' && (
             <div className="flex justify-between">
               <span>OCR Status</span>
               <span className="flex items-center space-x-1">

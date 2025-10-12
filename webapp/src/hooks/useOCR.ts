@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { StorachaFile, UserSettings } from "../types";
-import { OCRService, DEFAULT_OCR_SETTINGS } from "../services/ocrService";
+import { RealOCRService, DEFAULT_OCR_SETTINGS } from "../services/realOcrService";
 
 export const useOCR = () => {
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_OCR_SETTINGS);
-  const [ocrService] = useState(() => new OCRService(DEFAULT_OCR_SETTINGS));
+  const [ocrService] = useState(() => new RealOCRService(DEFAULT_OCR_SETTINGS));
 
   // Update service when settings change
   useEffect(() => {

@@ -1,16 +1,20 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Menu, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { FileGrid } from './FileGrid';
 import { BulkOperationsToolbar } from './BulkOperationsToolbar';
 import { OCRSettings } from './OCRSettings';
 import { FilterState, ViewMode, StorachaFile } from '../types';
-import { getClient } from '../hooks/useAuth';
+import { getClient, useAuth } from '../hooks/useAuth';
 import { decodeCidToString } from '../utils/decodeCidToString';
 import { useOCR } from '../hooks/useOCR';
+import toast from 'react-hot-toast';
 
 export const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
   const [files, setFiles] = useState<StorachaFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -28,15 +32,21 @@ export const Dashboard: React.FC = () => {
   });
 
   // Map upload API response to StorachaFile[]
-  function mapUploadsToFiles(uploadResponse: any[]): any[] {
+  function mapUploadsToFiles(uploadResponse: any[]): StorachaFile[] {
     return uploadResponse.map((upload, index) => ({
-      id: upload.root['/'],            // use root CID as ID
+      id: upload.root['/'],
       cid: upload.root['/'],
-      name: `File ${index + 1}`,       // fabricate name as no name in response
-      size: 0,                        // no size info in response, default to 0 or fetch if available
-      created: new Date(upload.insertedAt).getTime(),
-      updated: new Date(upload.updatedAt).getTime(),
+      name: `File ${index + 1}`,
+      size: 0,
+      type: 'unknown',
+      mimeType: 'application/octet-stream',
+      created: new Date(upload.insertedAt),
+      updated: new Date(upload.updatedAt),
       shards: upload.shards.map((shard: any) => shard['/']),
+      tags: [],
+      isPublic: false,
+      downloadCount: 0,
+      ocrStatus: 'not_processed',
     }));
   }
 
@@ -48,8 +58,25 @@ export const Dashboard: React.FC = () => {
       const response = await client.capability.upload.list({ cursor: '', size: 25 });
       const mappedFiles = mapUploadsToFiles(response.results);
       setFiles(mappedFiles);
-    } catch (error) {
+
+      if (settings.ocrEnabled && processFile) {
+        mappedFiles.forEach((file, index) => {
+          setTimeout(() => {
+            processFile(file, (updatedFile) => {
+              setFiles(prev => prev.map(f => f.id === file.id ? updatedFile : f));
+            });
+          }, 100 * index);
+        });
+      }
+    } catch (error: any) {
       console.error("Failed to list files: ", error);
+
+      // Handle session expiration
+      if (error?.message?.includes('Session expired') || error?.message?.includes('Space not found') || error?.message?.includes('missing current space')) {
+        toast.error('Session expired. Please login again.');
+        signOut();
+        navigate('/login');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -65,21 +92,20 @@ export const Dashboard: React.FC = () => {
         const searchLower = filters.search.toLowerCase();
         const cidStr = decodeCidToString(file.cid).toLowerCase();
         const ocrText = file.ocrText?.toLowerCase() || '';
+        const extractedText = file.extractedText?.toLowerCase() || '';
 
-        if (
-          !file.name.toLowerCase().includes(searchLower) &&
-          !cidStr.includes(searchLower) &&
-          !ocrText.includes(searchLower)
-        ) {
-          return false;
-        }
+        const nameMatch = file.name.toLowerCase().includes(searchLower);
+        const cidMatch = cidStr.includes(searchLower);
+        const ocrTextMatch = ocrText.includes(searchLower);
+        const extractedTextMatch = extractedText.includes(searchLower);
+
+        return nameMatch || cidMatch || ocrTextMatch || extractedTextMatch;
       }
       return true;
     });
   }, [files, filters]);
 
   const handleSearchChange = (search: string) => {
-    console.log("Search changed: ", search);
     setFilters({ ...filters, search: search.trim() });
   };
   
