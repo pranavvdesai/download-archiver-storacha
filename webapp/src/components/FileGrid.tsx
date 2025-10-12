@@ -2,6 +2,7 @@ import React from 'react';
 import { Grid, List } from 'lucide-react';
 import { StorachaFile, ViewMode } from '../types';
 import { FileCard } from './FileCard';
+import { FileCardSkeleton, FileListSkeleton } from './skeletons';
 
 interface FileGridProps {
   files: StorachaFile[];
@@ -30,8 +31,32 @@ export const FileGrid: React.FC<FileGridProps> = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="h-6 skeleton-shimmer rounded w-32 mb-2"></div>
+            <div className="h-4 skeleton-shimmer rounded w-24"></div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <div className="w-10 h-10 skeleton-shimmer rounded-lg"></div>
+            <div className="w-10 h-10 skeleton-shimmer rounded-lg"></div>
+          </div>
+        </div>
+
+        <div className={
+          viewMode === 'grid'
+            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
+            : 'space-y-3'
+        }>
+          {Array.from({ length: viewMode === 'grid' ? 8 : 5 }).map((_, index) => (
+            viewMode === 'grid' ? (
+              <FileCardSkeleton key={index} />
+            ) : (
+              <FileListSkeleton key={index} />
+            )
+          ))}
+        </div>
       </div>
     );
   }

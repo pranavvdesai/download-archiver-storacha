@@ -5,6 +5,7 @@ import { SignInForm } from './components/SignInForm';
 import { Dashboard } from './components/Dashboard';
 import { Settings } from './pages/Settings';
 import { useAuth } from './hooks/useAuth';
+import { FormSkeleton } from './components/skeletons';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading } = useAuth();
@@ -24,11 +25,7 @@ const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
-      </div>
-    );
+    return <FormSkeleton />;
   }
 
   return (
