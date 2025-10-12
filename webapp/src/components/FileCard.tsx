@@ -1,18 +1,66 @@
 import React, { useState } from 'react';
-import { Copy, Download, Tag, Globe, Lock, MoreVertical, Check, X } from 'lucide-react';
+import {
+  Copy,
+  Download,
+  Tag,
+  Globe,
+  Lock,
+  MoreVertical,
+  Check,
+  X,
+  Eye,
+  RefreshCw,
+  AlertCircle,
+  Clock,
+} from 'lucide-react';
 import { StorachaFile } from '../types';
 import { formatFileSize, formatDate, getFileTypeIcon, copyToClipboard } from '../utils/fileUtils';
 import { decodeCidToString } from '../utils/decodeCidToString';
 
 interface FileCardProps {
   file: StorachaFile;
-  viewMode: 'grid' | 'list';
+  viewMode: "grid" | "list";
   onAddTag: (fileId: string, tag: string) => void;
   onRemoveTag: (fileId: string, tag: string) => void;
   isSelected?: boolean;
   onSelectionChange?: (fileId: string, selected: boolean) => void;
   showSelection?: boolean;
+  onRetryOCR?: (fileId: string) => void;
 }
+
+const getOCRStatusIcon = (status: StorachaFile["ocrStatus"]) => {
+  switch (status) {
+    case "queued":
+      return <Clock className="w-3 h-3 text-blue-500 animate-pulse" />;
+    case "processing":
+      return <Clock className="w-3 h-3 text-blue-500 animate-spin" />;
+    case "completed":
+      return <Eye className="w-3 h-3 text-green-500" />;
+    case "failed":
+      return <AlertCircle className="w-3 h-3 text-red-500" />;
+    case "skipped":
+      return null;
+    default:
+      return null;
+  }
+};
+
+const getOCRStatusText = (status: StorachaFile["ocrStatus"]) => {
+  switch (status) {
+    case "queued":
+      return "OCR Queued";
+    case "processing":
+      return "Processing...";
+    case "completed":
+      return "Text Extracted";
+    case "failed":
+      return "OCR Failed";
+    case "skipped":
+      return "OCR Skipped";
+    default:
+      return "Not Processed";
+  }
+};
 
 export const FileCard: React.FC<FileCardProps> = ({
   file,
@@ -21,11 +69,12 @@ export const FileCard: React.FC<FileCardProps> = ({
   onRemoveTag,
   isSelected = false,
   onSelectionChange,
-  showSelection = false
+  showSelection = false,
+  onRetryOCR,
 }) => {
   const [showActions, setShowActions] = useState(false);
   const [isAddingTag, setIsAddingTag] = useState(false);
-  const [newTag, setNewTag] = useState('');
+  const [newTag, setNewTag] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
 
   const cidStr = decodeCidToString(file.cid);
@@ -42,7 +91,7 @@ export const FileCard: React.FC<FileCardProps> = ({
   const handleAddTag = () => {
     if (newTag.trim()) {
       onAddTag(file.id, newTag.trim());
-      setNewTag('');
+      setNewTag("");
       setIsAddingTag(false);
     }
   };
@@ -54,11 +103,13 @@ export const FileCard: React.FC<FileCardProps> = ({
     a.click();
   };
 
-  if (viewMode === 'list') {
+  if (viewMode === "list") {
     return (
-      <div className={`bg-white border rounded-lg p-4 hover:shadow-md transition-all duration-200 group ${
-        isSelected ? 'border-red-500 bg-red-50' : 'border-gray-200'
-      }`}>
+      <div
+        className={`bg-white border rounded-lg p-4 hover:shadow-md transition-all duration-200 group ${
+          isSelected ? "border-red-500 bg-red-50" : "border-gray-200"
+        }`}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4 flex-1 min-w-0">
             {showSelection && (
@@ -72,15 +123,27 @@ export const FileCard: React.FC<FileCardProps> = ({
             <div className="text-2xl">{!previewUrl ? getFileTypeIcon(file.type) : 
         <img src={previewUrl} className='h-10 w-10' />}</div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-medium text-gray-900 truncate">{cidStr}</h3>
+              <h3 className="font-medium text-gray-900 truncate">
+                {file.name || cidStr}
+              </h3>
               <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
                 <span>{formatFileSize(file.size)}</span>
                 <span>{formatDate(file.created)}</span>
                 <span className="flex items-center space-x-1">
-                  {file.isPublic ? <Globe className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
-                  <span>{file.isPublic ? 'Public' : 'Private'}</span>
+                  {file.isPublic ? (
+                    <Globe className="w-3 h-3" />
+                  ) : (
+                    <Lock className="w-3 h-3" />
+                  )}
+                  <span>{file.isPublic ? "Public" : "Private"}</span>
                 </span>
                 <span>{file.downloadCount ?? 0} downloads</span>
+                {file.ocrStatus && file.ocrStatus !== 'not_processed' && (
+                  <span className="flex items-center space-x-1">
+                    {getOCRStatusIcon(file.ocrStatus)}
+                    <span>{getOCRStatusText(file.ocrStatus)}</span>
+                  </span>
+                )}
                 <a href={previewUrl} target="_blank" rel="noopener noreferrer"
                   className="text-red-600 hover:underline ml-2"
                 >
@@ -120,8 +183,12 @@ export const FileCard: React.FC<FileCardProps> = ({
                     onClick={handleCopyCID}
                     className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                   >
-                    {copySuccess ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
-                    <span>{copySuccess ? 'Copied!' : 'Copy CID'}</span>
+                    {copySuccess ? (
+                      <Check className="w-4 h-4 text-green-600" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                    <span>{copySuccess ? "Copied!" : "Copy CID"}</span>
                   </button>
                   <button
                     onClick={() => setIsAddingTag(true)}
@@ -137,6 +204,15 @@ export const FileCard: React.FC<FileCardProps> = ({
                     <Download className="w-4 h-4" />
                     <span>Download</span>
                   </button>
+                  {file.ocrStatus === "failed" && onRetryOCR && (
+                    <button
+                      onClick={() => onRetryOCR(file.id)}
+                      className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      <span>Retry OCR</span>
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -151,7 +227,7 @@ export const FileCard: React.FC<FileCardProps> = ({
               onChange={(e) => setNewTag(e.target.value)}
               placeholder="Enter tag name"
               className="flex-1 px-3 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
+              onKeyPress={(e) => e.key === "Enter" && handleAddTag()}
               autoFocus
             />
             <button onClick={handleAddTag} className="p-1 text-green-600 hover:text-green-700">
@@ -168,9 +244,11 @@ export const FileCard: React.FC<FileCardProps> = ({
 
   // Grid View Card
   return (
-    <div className={`bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 group ${
-      isSelected ? 'border-red-500' : 'border-gray-200'
-    }`}>
+    <div
+      className={`bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 group ${
+        isSelected ? "border-red-500" : "border-gray-200"
+      }`}
+    >
       <div className="aspect-square bg-gray-50 flex items-center justify-center text-4xl relative">
         {showSelection && (
           <div className="absolute top-2 left-2 z-10">
@@ -192,32 +270,38 @@ export const FileCard: React.FC<FileCardProps> = ({
           )}
         </div>
 
-        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100 space-x-4">
-          <a href={previewUrl} target="_blank" rel="noopener noreferrer"
-            className="p-2 bg-white rounded-full text-sm shadow-md hover:shadow-lg transition-all duration-200"
-            title="Preview file"
-          >
-            Preview
-          </a>
-          <button
-            onClick={handleCopyCID}
-            className="p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-all duration-200"
-            title="Copy CID"
-          >
-            {copySuccess ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
-          </button>
-          <button
-            onClick={handleDownload}
-            className="p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-all duration-200"
-            title="Download"
-          >
-            <Download className="w-4 h-4" />
-          </button>
+        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+          <div className="flex space-x-2">
+            <a href={previewUrl} target="_blank" rel="noopener noreferrer"
+              className="p-2 bg-white rounded-full text-sm shadow-md hover:shadow-lg transition-all duration-200"
+              title="Preview file"
+            >
+              <Eye className="w-4 h-4" />
+            </a>
+            <button
+              onClick={handleCopyCID}
+              className="p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-all duration-200"
+              title="Copy CID"
+            >
+              {copySuccess ? (
+                <Check className="w-4 h-4 text-green-600" />
+              ) : (
+                <Copy className="w-4 h-4" />
+              )}
+            </button>
+            <button
+              onClick={handleDownload}
+              className="p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-all duration-200"
+              title="Download"
+            >
+              <Download className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
       <div className="p-4">
-        <h3 className="font-medium text-gray-900 truncate mb-2">{cidStr}</h3>
+        <h3 className="font-medium text-gray-900 truncate mb-2">{file.name || cidStr}</h3>
 
         <div className="space-y-2 text-sm text-gray-500">
           <div className="flex justify-between">
@@ -232,6 +316,17 @@ export const FileCard: React.FC<FileCardProps> = ({
             <span>Downloads</span>
             <span>{file.downloadCount ?? 0}</span>
           </div>
+          {file.ocrStatus && file.ocrStatus !== 'not_processed' && (
+            <div className="flex justify-between">
+              <span>OCR Status</span>
+              <span className="flex items-center space-x-1">
+                {getOCRStatusIcon(file.ocrStatus)}
+                <span className="text-xs">
+                  {getOCRStatusText(file.ocrStatus)}
+                </span>
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="mt-3">
@@ -254,7 +349,7 @@ export const FileCard: React.FC<FileCardProps> = ({
                 onChange={(e) => setNewTag(e.target.value)}
                 placeholder="Enter tag"
                 className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-red-500 focus:border-transparent"
-                onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
+                onKeyPress={(e) => e.key === "Enter" && handleAddTag()}
                 autoFocus
               />
               <button onClick={handleAddTag} className="p-1 text-green-600 hover:text-green-700">

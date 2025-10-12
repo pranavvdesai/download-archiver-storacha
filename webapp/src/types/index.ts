@@ -68,9 +68,25 @@ export interface StorachaFile {
   type: string;
   mimeType: string;
   created: Date;
+  updated?: Date;
+  shards?: string[];
   tags: string[];
   isPublic: boolean;
   downloadCount: number;
+  // OCR-related fields
+  ocrStatus?:
+    | "not_processed"
+    | "queued"
+    | "processing"
+    | "completed"
+    | "failed"
+    | "skipped";
+  ocrError?: string;
+  ocrText?: string; // Alias for extractedText for backward compatibility
+  extractedText?: string;
+  textExtractionMethod?: "embedded" | "ocr" | "none";
+  processingStartedAt?: Date;
+  processingCompletedAt?: Date;
 }
 
 export interface FilterState {
@@ -88,4 +104,10 @@ export interface CacheEntry<T> {
   data: T;
   timestamp: number;
   ttl: number;
+}
+
+export interface UserSettings {
+  ocrEnabled: boolean;
+  maxFileSizeForOcr: number; // in bytes
+  ocrTimeout: number; // in milliseconds
 }
