@@ -6,7 +6,9 @@ import { Sidebar } from './Sidebar';
 import { FileGrid } from './FileGrid';
 import { BulkOperationsToolbar } from './BulkOperationsToolbar';
 import { OCRSettings } from './OCRSettings';
+import { SearchResults } from './SearchResults';
 import { FilterState, ViewMode, StorachaFile } from '../types';
+import { SearchResult } from '../services/searchService';
 import { getClient, useAuth } from '../hooks/useAuth';
 import { decodeCidToString } from '../utils/decodeCidToString';
 import { useOCR } from '../hooks/useOCR';
@@ -22,6 +24,8 @@ export const Dashboard: React.FC = () => {
   const { settings, updateSettings, processFile } = useOCR();
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearchMode, setIsSearchMode] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     search: "",
     fileType: "all",
@@ -108,6 +112,28 @@ export const Dashboard: React.FC = () => {
   const handleSearchChange = (search: string) => {
     setFilters({ ...filters, search: search.trim() });
   };
+
+  const handleSearchResults = (results: SearchResult[]) => {
+    setSearchResults(results);
+    setIsSearchMode(results.length > 0);
+  };
+
+  const handleFileSelect = (file: StorachaFile) => {
+    console.log('Selected file:', file);
+  };
+  
+  const handleFileAction = (file: StorachaFile, action: string) => {
+    switch (action) {
+      case 'download':
+        console.log('Download file:', file);
+        break;
+      case 'view':
+        console.log('View file:', file);
+        break;
+      default:
+        console.log('Action:', action, 'on file:', file);
+    }
+  };
   
 
   const handleSelectionChange = (fileId: string, selected: boolean) => {
@@ -134,6 +160,8 @@ export const Dashboard: React.FC = () => {
       <Header
         searchQuery={filters.search}
         onSearchChange={handleSearchChange}
+        onSearchResults={handleSearchResults}
+        onFileSelect={handleFileSelect}
       />
 
       <div className="flex">
@@ -189,18 +217,26 @@ export const Dashboard: React.FC = () => {
               </div>
             )}
 
-            <FileGrid
-              files={filteredFiles}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-              onAddTag={() => {}}
-              onRemoveTag={() => {}}
-              isLoading={isLoading}
-              selectedFiles={selectedFiles}
-              onSelectionChange={handleSelectionChange}
-              showSelection={true}
-              onRetryOCR={handleRetryOCR}
-            />
+            {isSearchMode ? (
+              <SearchResults
+                results={searchResults}
+                onFileSelect={handleFileSelect}
+                onFileAction={handleFileAction}
+              />
+            ) : (
+              <FileGrid
+                files={filteredFiles}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                onAddTag={() => {}}
+                onRemoveTag={() => {}}
+                isLoading={isLoading}
+                selectedFiles={selectedFiles}
+                onSelectionChange={handleSelectionChange}
+                showSelection={true}
+                onRetryOCR={handleRetryOCR}
+              />
+            )}
           </div>
         </main>
       </div>
