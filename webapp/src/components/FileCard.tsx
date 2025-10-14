@@ -27,6 +27,7 @@ export const FileCard: React.FC<FileCardProps> = ({
   const [isAddingTag, setIsAddingTag] = useState(false);
   const [newTag, setNewTag] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const cidStr = decodeCidToString(file.cid);
 
@@ -69,8 +70,8 @@ export const FileCard: React.FC<FileCardProps> = ({
                 className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
               />
             )}
-            <div className="text-2xl">{!previewUrl ? getFileTypeIcon(file.type) : 
-        <img src={previewUrl} className='h-10 w-10' />}</div>
+            <div className="text-2xl">{imageError || !previewUrl ? getFileTypeIcon(file.type) : 
+        <img src={previewUrl} className='h-10 w-10' onError={() => setImageError(true)} />}</div>
             <div className="flex-1 min-w-0">
               <h3 className="font-medium text-gray-900 truncate">{cidStr}</h3>
               <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
@@ -182,8 +183,8 @@ export const FileCard: React.FC<FileCardProps> = ({
             />
           </div>
         )}
-        {!previewUrl ? getFileTypeIcon(file.type) : 
-        <img src={previewUrl} className='h-full w-full py-20 p-10' />}
+        {imageError || !previewUrl ? <div className="h-full w-full bg-gray-200"></div> : 
+        <img src={previewUrl} className='h-full w-full py-20 p-10' onError={() => setImageError(true)} />}
         <div className="absolute top-2 right-2">
           {file.isPublic ? (
             <Globe className="w-4 h-4 text-gray-400" />

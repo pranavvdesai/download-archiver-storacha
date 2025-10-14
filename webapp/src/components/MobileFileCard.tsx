@@ -25,6 +25,7 @@ export const MobileFileCard: React.FC<MobileFileCardProps> = ({
   const [isAddingTag, setIsAddingTag] = useState(false);
   const [newTag, setNewTag] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -159,8 +160,8 @@ export const MobileFileCard: React.FC<MobileFileCardProps> = ({
             {/* File Icon/Preview */}
             <div className="flex-shrink-0">
               <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-xl">
-                {!previewUrl ? getFileTypeIcon(file.type) : 
-                  <img src={previewUrl} className='w-full h-full object-cover rounded-lg' />}
+                {imageError || !previewUrl ? getFileTypeIcon(file.type) : 
+                  <img src={previewUrl} className='w-full h-full object-cover rounded-lg' onError={() => setImageError(true)} />}
               </div>
             </div>
 
