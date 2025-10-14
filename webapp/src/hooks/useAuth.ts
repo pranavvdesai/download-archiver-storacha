@@ -38,13 +38,52 @@ export const useAuth = () => {
 // Global client singleton promise
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let clientPromise: Promise<any> | null = null;
+let isClientInitialized = false;
 
 // Exported function to get or create the client
-export function getClient() {
+export async function getClient(skipRestore = false) {
   if (!clientPromise) {
     clientPromise = create();
   }
-  return clientPromise;
+
+  const client = await clientPromise;
+
+  // Restore session from localStorage if not already initialized and not explicitly skipped
+  if (!isClientInitialized && !skipRestore) {
+    const storedUser = localStorage.getItem("storacha-session");
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+
+        const accounts = client.accounts();
+        if (accounts.length === 0) {
+          throw new Error('Session expired - please login again');
+        }
+
+        if (parsedUser.spaceDid) {
+          const spaces = client.spaces();
+          const spaceExists = spaces.some((s: any) => s.did() === parsedUser.spaceDid);
+
+          if (spaceExists) {
+            await client.setCurrentSpace(parsedUser.spaceDid);
+          } else {
+            throw new Error('Space not found - please login again');
+          }
+        }
+      } catch (error) {
+        localStorage.removeItem("storacha-session");
+        throw error;
+      }
+    }
+    isClientInitialized = true;
+  }
+
+  return client;
+}
+
+// Reset client initialization state (used during login/logout)
+export function resetClientState() {
+  isClientInitialized = false;
 }
 
 
@@ -112,7 +151,8 @@ export const useAuthProvider = (): AuthContextType => {
 
       if (!isExistingDB) toast("Verification email sent! Please check your inbox.");
 
-      const client = await getClient();
+      // Skip session restoration during login - we're setting it up fresh
+      const client = await getClient(true);
       const account = await client.login(userEmail);
 
       await account.plan.wait(); // Await user email verification
@@ -165,6 +205,9 @@ export const useAuthProvider = (): AuthContextType => {
       localStorage.setItem("storacha-session", JSON.stringify(newUser));
       setUser(newUser);
 
+      // Mark client as initialized after successful login
+      resetClientState();
+
       toast.success("Logged in successfully!");
     } catch (err: any) {
       console.error(err);
@@ -203,17 +246,10 @@ export const useAuthProvider = (): AuthContextType => {
     setIsSessionFresh(false);
     setNeedsReauth(false);
     localStorage.removeItem("storacha-session");
-    const dbDeleteRequest = indexedDB.deleteDatabase("w3up-client");
 
-    dbDeleteRequest.onerror = (event) => {
-      console.error("Failed to delete IndexedDB access-store", event);
-    };
-    dbDeleteRequest.onblocked = () => {
-      console.warn("Deletion of IndexedDB access-store blocked");
-    };
-    dbDeleteRequest.onsuccess = () => {
-      console.log("IndexedDB access-store deleted successfully");
-    };
+    resetClientState();
+    clientPromise = null;
+    indexedDB.deleteDatabase("w3up-client");
   };
 
   return {

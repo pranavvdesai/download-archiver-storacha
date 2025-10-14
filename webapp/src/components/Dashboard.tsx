@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { FileGrid } from './FileGrid';
@@ -7,38 +8,50 @@ import { MobileFileCard } from './MobileFileCard';
 import { MobileNavigation } from './MobileNavigation';
 import { MobileUpload } from './MobileUpload';
 import { BulkOperationsToolbar } from './BulkOperationsToolbar';
+import { OCRSettings } from './OCRSettings';
 import { FilterState, ViewMode, StorachaFile } from '../types';
-import { getClient } from '../hooks/useAuth';
+import { getClient, useAuth } from '../hooks/useAuth';
 import { decodeCidToString } from '../utils/decodeCidToString';
-
+import { useOCR } from '../hooks/useOCR';
+import toast from 'react-hot-toast';
 
 export const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
   const [files, setFiles] = useState<StorachaFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [showSettings, setShowSettings] = useState(false);
+  const { settings, updateSettings, processFile } = useOCR();
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [showSearch, setShowSearch] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
-    search: '',
-    fileType: 'all',
-    dateRange: 'all',
+    search: "",
+    fileType: "all",
+    dateRange: "all",
     tags: [],
-    sortBy: 'date',
-    sortOrder: 'desc'
+    sortBy: "date",
+    sortOrder: "desc",
   });
 
   // Map upload API response to StorachaFile[]
-  function mapUploadsToFiles(uploadResponse: any[]): any[] {
+  function mapUploadsToFiles(uploadResponse: any[]): StorachaFile[] {
     return uploadResponse.map((upload, index) => ({
-      id: upload.root['/'],            // use root CID as ID
+      id: upload.root['/'],
       cid: upload.root['/'],
-      name: `File ${index + 1}`,       // fabricate name as no name in response
-      size: 0,                        // no size info in response, default to 0 or fetch if available
-      created: new Date(upload.insertedAt).getTime(),
-      updated: new Date(upload.updatedAt).getTime(),
+      name: `File ${index + 1}`,
+      size: 0,
+      type: 'unknown',
+      mimeType: 'application/octet-stream',
+      created: new Date(upload.insertedAt),
+      updated: new Date(upload.updatedAt),
       shards: upload.shards.map((shard: any) => shard['/']),
+      tags: [],
+      isPublic: false,
+      downloadCount: 0,
+      ocrStatus: 'not_processed',
     }));
   }
 
@@ -50,8 +63,25 @@ export const Dashboard: React.FC = () => {
       const response = await client.capability.upload.list({ cursor: '', size: 25 });
       const mappedFiles = mapUploadsToFiles(response.results);
       setFiles(mappedFiles);
-    } catch (error) {
+
+      if (settings.ocrEnabled && processFile) {
+        mappedFiles.forEach((file, index) => {
+          setTimeout(() => {
+            processFile(file, (updatedFile) => {
+              setFiles(prev => prev.map(f => f.id === file.id ? updatedFile : f));
+            });
+          }, 100 * index);
+        });
+      }
+    } catch (error: any) {
       console.error("Failed to list files: ", error);
+
+      // Handle session expiration
+      if (error?.message?.includes('Session expired') || error?.message?.includes('Space not found') || error?.message?.includes('missing current space')) {
+        toast.error('Session expired. Please login again.');
+        signOut();
+        navigate('/login');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -66,26 +96,28 @@ export const Dashboard: React.FC = () => {
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
         const cidStr = decodeCidToString(file.cid).toLowerCase();
-        if (!file.name.toLowerCase().includes(searchLower) && !cidStr.includes(searchLower)) {
-          return false;
-        }
+        const ocrText = file.ocrText?.toLowerCase() || '';
+        const extractedText = file.extractedText?.toLowerCase() || '';
+
+        const nameMatch = file.name.toLowerCase().includes(searchLower);
+        const cidMatch = cidStr.includes(searchLower);
+        const ocrTextMatch = ocrText.includes(searchLower);
+        const extractedTextMatch = extractedText.includes(searchLower);
+
+        return nameMatch || cidMatch || ocrTextMatch || extractedTextMatch;
       }
       return true;
     });
   }, [files, filters]);
-  
 
   const handleSearchChange = (search: string) => {
-    console.log("Search changed: ", search);
     setFilters({ ...filters, search: search.trim() });
   };
   
 
   const handleSelectionChange = (fileId: string, selected: boolean) => {
-    setSelectedFiles(prev => 
-      selected 
-        ? [...prev, fileId]
-        : prev.filter(id => id !== fileId)
+    setSelectedFiles((prev) =>
+      selected ? [...prev, fileId] : prev.filter((id) => id !== fileId)
     );
   };
 
@@ -95,6 +127,15 @@ export const Dashboard: React.FC = () => {
 
   const handleUpload = async (uploadFiles: File[]) => {
     console.log('Uploading files:', uploadFiles);
+  };
+
+  const handleRetryOCR = async (fileId: string) => {
+    const file = files.find(f => f.id === fileId);
+    if (!file) return;
+
+    await processFile(file, (updatedFile) => {
+      setFiles(prev => prev.map(f => f.id === fileId ? updatedFile : f));
+    });
   };
 
   return (
@@ -129,13 +170,40 @@ export const Dashboard: React.FC = () => {
 
         <main className="flex-1 lg:ml-0">
           <div className="p-4 lg:p-6">
-            <div className="lg:hidden mb-4">
+            <div className="lg:hidden mb-4 flex justify-between items-center">
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <Menu className="w-5 h-5" />
+                  <span>Filters</span>
+                </button>
+              </div>
               <button
-                onClick={() => setSidebarOpen(true)}
-                className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                onClick={() => setShowSettings(!showSettings)}
+                className={`flex items-center space-x-2 px-4 py-2 border rounded-lg transition-colors ${
+                  showSettings
+                    ? "bg-red-100 border-red-300 text-red-700"
+                    : "bg-white border-gray-300 hover:bg-gray-50"
+                }`}
               >
-                <Menu className="w-5 h-5" />
-                <span>Filters</span>
+                <Settings className="w-5 h-5" />
+                <span>OCR Settings</span>
+              </button>
+            </div>
+            <div className="hidden lg:block mb-4 flex justify-between items-center">
+                <h1 className="text-2xl font-bold text-gray-900">Files</h1>
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                className={`flex items-center space-x-2 px-4 py-2 border rounded-lg transition-colors ${
+                  showSettings
+                    ? "bg-red-100 border-red-300 text-red-700"
+                    : "bg-white border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                <Settings className="w-5 h-5" />
+                <span>OCR Settings</span>
               </button>
             </div>
 
@@ -145,6 +213,15 @@ export const Dashboard: React.FC = () => {
               onRemoveTags={() => {}}
               onClearSelection={handleClearSelection}
             />
+
+            {showSettings && (
+              <div className="mb-6">
+                <OCRSettings
+                  settings={settings}
+                  onUpdateSettings={updateSettings}
+                />
+              </div>
+            )}
 
             <div className="hidden lg:block">
               <FileGrid
@@ -157,6 +234,7 @@ export const Dashboard: React.FC = () => {
                 selectedFiles={selectedFiles}
                 onSelectionChange={handleSelectionChange}
                 showSelection={true}
+                onRetryOCR={handleRetryOCR}
               />
             </div>
 
