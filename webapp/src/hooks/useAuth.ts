@@ -5,6 +5,7 @@ import * as DID from "@ipld/dag-ucan/did";
 import * as Delegation from "@ucanto/core/delegation";
 import toast from "react-hot-toast";
 import { generateAvatarUrl } from "../utils/avatar";
+import { userService, userSettingsService, spaceService, sessionService, eventService } from "../services/database";
 
 
 // 15 minutes session timeout
@@ -141,6 +142,7 @@ export const useAuthProvider = (): AuthContextType => {
   // Core client initialization and login logic inside hook
   async function initClient(userEmail: `${string}@${string}`, savedSpaceDid?: `did:${string}:${string}`) {
     let toastId: string | undefined;
+    let sessionId: string | undefined;
 
     try {
       setError("");
@@ -159,6 +161,7 @@ export const useAuthProvider = (): AuthContextType => {
       toast.success("Email verified successfully! 🚀");
 
       let spaceDid: `did:${string}:${string}`;
+      let isNewSpace = false;
 
       if (savedSpaceDid) {
         spaceDid = savedSpaceDid;
@@ -174,6 +177,7 @@ export const useAuthProvider = (): AuthContextType => {
           const space = await client.createSpace("download-vault", { account });
           spaceDid = space.did();
           await client.setCurrentSpace(spaceDid);
+          isNewSpace = true;
         }
 
         // Create delegation for agent
@@ -193,9 +197,9 @@ export const useAuthProvider = (): AuthContextType => {
 
       const now = Date.now();
       const newUser: User = {
-        id: userEmail, 
-        name: userEmail.split('@')[0], 
-        email: userEmail, 
+        id: userEmail,
+        name: userEmail.split('@')[0],
+        email: userEmail,
         spaceDid: savedSpaceDid || (client.currentSpace())?.did(),
         avatar: generateAvatarUrl(userEmail),
         lastActivity: now,
@@ -207,6 +211,52 @@ export const useAuthProvider = (): AuthContextType => {
 
       // Mark client as initialized after successful login
       resetClientState();
+
+      // 1. Create or update user in database
+      try {
+        await userService.upsertUser({
+          email: userEmail,
+          name: newUser.name,
+          avatar_url: newUser.avatar,
+          default_space_id: spaceDid,
+          last_login_at: new Date().toISOString()
+        });
+
+        // 2. Ensure user settings exist
+        await userSettingsService.getOrCreateUserSettings(userEmail);
+
+        // 3. Create or update space in database
+        await spaceService.upsertSpace({
+          space_id: spaceDid,
+          name: "download-vault",
+          owner_email: userEmail,
+          visibility: 'private'
+        });
+
+        // 4. Create session record
+        const session = await sessionService.createSession({
+          user_email: userEmail,
+          expires_at: new Date(now + SESSION_TIMEOUT).toISOString(),
+          user_agent: navigator.userAgent,
+          session_data: { space_id: spaceDid }
+        });
+        sessionId = session?.session_id;
+
+        // 5. Log login event
+        await eventService.logEvent({
+          event_type: isNewSpace ? 'user.registered' : 'user.login',
+          user_email: userEmail,
+          space_id: spaceDid,
+          payload: {
+            is_new_space: isNewSpace,
+            session_id: sessionId
+          }
+        });
+
+      } catch (dbError: any) {
+        console.error('Database sync error during login:', dbError);
+        toast.error('Warning: Database sync partially failed');
+      }
 
       toast.success("Logged in successfully!");
     } catch (err: any) {
