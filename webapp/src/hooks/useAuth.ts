@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, createContext, useContext } from 'react';
 import { create } from '@web3-storage/w3up-client';
 import { User } from '../types';
 
@@ -21,7 +21,7 @@ export const useAuth = () => {
   return context;
 };
 
-export const useAuthProvider = () => {
+export const useAuthProvider = (): AuthContextType => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -42,7 +42,6 @@ export const useAuthProvider = () => {
 
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
-    
     // Simulate authentication
     await new Promise(resolve => setTimeout(resolve, 1000));
     

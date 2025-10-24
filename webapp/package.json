@@ -11,13 +11,17 @@
   },
   "dependencies": {
     "@ipld/dag-ucan": "^3.4.5",
+    "@supabase/supabase-js": "^2.75.0",
     "@ucanto/core": "^10.4.0",
     "@web3-storage/w3up-client": "^17.3.0",
     "lucide-react": "^0.344.0",
     "multiformats": "^13.4.0",
+    "pdfjs-dist": "^5.4.296",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-hot-toast": "^2.6.0"
+    "react-hot-toast": "^2.6.0",
+    "react-router-dom": "^7.9.4",
+    "tesseract.js": "^6.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

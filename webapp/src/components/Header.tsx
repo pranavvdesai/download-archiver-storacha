@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { LogOut, User, Search, ChevronDown, AlertCircle, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { LogOut, User, Search, Settings, ChevronDown, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useSpaces } from '../hooks/useSpaces';
 
@@ -8,9 +9,12 @@ interface HeaderProps {
   onSearchChange: (query: string) => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange }) => {
+export const Header: React.FC<HeaderProps> = ({
+  searchQuery,
+  onSearchChange,
+}) => {
   const { user, signOut } = useAuth();
-  const { spaces, currentSpace, isLoading, error, selectSpace } = useSpaces();
+  const { spaces, currentSpace, isLoading, selectSpace } = useSpaces();
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
   const handleSpaceChange = async (spaceDid: string) => {
@@ -26,6 +30,7 @@ export const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange }) =
       setTimeout(() => setNotification(null), 5000);
     }
   };
+  const navigate = useNavigate();
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
@@ -106,9 +111,19 @@ export const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange }) =
                 <User className="w-4 h-4 text-gray-600" />
               </div>
             )}
-            <span className="text-sm font-medium text-gray-700">{user?.name}</span>
+            <span className="text-sm font-medium text-gray-700">
+              {user?.name}
+            </span>
           </div>
-          
+
+          <button
+            onClick={() => navigate('/settings')}
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
+            title="Settings"
+          >
+            <Settings className="w-5 h-5" />
+          </button>
+
           <button
             onClick={signOut}
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
@@ -121,3 +136,4 @@ export const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange }) =
     </header>
   );
 };
+
