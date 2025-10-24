@@ -32,7 +32,8 @@ export const MobileFileCard: React.FC<MobileFileCardProps> = ({
   const startX = useRef(0);
 
   const cidStr = decodeCidToString(file.cid);
-  const previewUrl = cidStr ? `https://${cidStr}.ipfs.w3s.link/` : '#';
+  const previewUrl = cidStr ? `https://w3s.link/ipfs/${cidStr}` : '#';
+  const isLikelyImage = (file.mimeType?.startsWith('image/') || /\.(png|jpe?g|gif|webp|svg)$/i.test(file.name || '')) && !imageError;
 
   const handleCopyCID = async () => {
     const success = await copyToClipboard(cidStr);
@@ -160,7 +161,7 @@ export const MobileFileCard: React.FC<MobileFileCardProps> = ({
             {/* File Icon/Preview */}
             <div className="flex-shrink-0">
               <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-xl">
-                {imageError || !previewUrl ? getFileTypeIcon(file.type) : 
+                {!isLikelyImage || !previewUrl ? getFileTypeIcon(file.type) : 
                   <img src={previewUrl} className='w-full h-full object-cover rounded-lg' onError={() => setImageError(true)} />}
               </div>
             </div>

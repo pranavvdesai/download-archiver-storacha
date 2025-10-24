@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@ipld/dag-ucan": "^3.4.5",
+    "@supabase/supabase-js": "^2.75.0",
     "@ucanto/core": "^10.4.0",
     "@web3-storage/w3up-client": "^17.3.0",
     "lucide-react": "^0.344.0",
