@@ -26,6 +26,7 @@ interface FileCardProps {
   onSelectionChange?: (fileId: string, selected: boolean) => void;
   showSelection?: boolean;
   onRetryOCR?: (fileId: string) => void;
+  searchQuery?: string;
 }
 
 const getOCRStatusIcon = (status: StorachaFile["ocrStatus"]) => {
@@ -71,6 +72,7 @@ export const FileCard: React.FC<FileCardProps> = ({
   onSelectionChange,
   showSelection = false,
   onRetryOCR,
+  searchQuery,
 }) => {
   const [showActions, setShowActions] = useState(false);
   const [isAddingTag, setIsAddingTag] = useState(false);
@@ -78,8 +80,24 @@ export const FileCard: React.FC<FileCardProps> = ({
   const [copySuccess, setCopySuccess] = useState(false);
 
   const cidStr = decodeCidToString(file.cid);
-
-  const previewUrl = cidStr ? `https://${cidStr}.ipfs.w3s.link/` : '#';
+  const previewUrl = cidStr ? `https://w3s.link/ipfs/${cidStr}` : '#';
+  const highlight = (text: string) => {
+    if (!searchQuery) return text;
+    try {
+      const q = searchQuery.trim();
+      if (!q) return text;
+      const parts = text.split(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, 'gi'));
+      return parts.map((part, i) =>
+        part.toLowerCase() === q.toLowerCase() ? (
+          <mark key={i} className="bg-yellow-200 text-gray-900">{part}</mark>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      );
+    } catch {
+      return text;
+    }
+  };
   const handleCopyCID = async () => {
     const success = await copyToClipboard(cidStr);
     if (success) {
@@ -124,7 +142,7 @@ export const FileCard: React.FC<FileCardProps> = ({
         <img src={previewUrl} className='h-10 w-10' />}</div>
             <div className="flex-1 min-w-0">
               <h3 className="font-medium text-gray-900 truncate">
-                {file.name || cidStr}
+                {highlight(file.name || cidStr) as unknown as React.ReactNode}
               </h3>
               <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
                 <span>{formatFileSize(file.size)}</span>
@@ -160,7 +178,7 @@ export const FileCard: React.FC<FileCardProps> = ({
                   key={tag}
                   className="inline-flex items-center px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full group-hover:bg-red-200 transition-colors"
                 >
-                  {tag}
+                  {highlight(tag) as unknown as React.ReactNode}
                   <button onClick={() => onRemoveTag(file.id, tag)} className="ml-1 hover:text-red-900">
                     <X className="w-3 h-3" />
                   </button>
@@ -301,7 +319,7 @@ export const FileCard: React.FC<FileCardProps> = ({
       </div>
 
       <div className="p-4">
-        <h3 className="font-medium text-gray-900 truncate mb-2">{file.name || cidStr}</h3>
+        <h3 className="font-medium text-gray-900 truncate mb-2">{highlight(file.name || cidStr) as unknown as React.ReactNode}</h3>
 
         <div className="space-y-2 text-sm text-gray-500">
           <div className="flex justify-between">
@@ -333,7 +351,7 @@ export const FileCard: React.FC<FileCardProps> = ({
           <div className="flex flex-wrap gap-1 mb-2">
             {(file.tags ?? []).map(tag => (
               <span key={tag} className="inline-flex items-center px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
-                {tag}
+                {highlight(tag) as unknown as React.ReactNode}
                 <button onClick={() => onRemoveTag(file.id, tag)} className="ml-1 hover:text-red-900">
                   <X className="w-3 h-3" />
                 </button>

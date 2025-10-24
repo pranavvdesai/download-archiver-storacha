@@ -15,6 +15,7 @@ interface FileGridProps {
   onSelectionChange?: (fileId: string, selected: boolean) => void;
   showSelection?: boolean;
   onRetryOCR?: (fileId: string) => void;
+  searchQuery?: string;
 }
 
 export const FileGrid: React.FC<FileGridProps> = ({
@@ -28,6 +29,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
   onSelectionChange,
   showSelection = false,
   onRetryOCR,
+  searchQuery,
 }) => {
   if (isLoading) {
     return (
@@ -128,6 +130,7 @@ export const FileGrid: React.FC<FileGridProps> = ({
               onSelectionChange={onSelectionChange}
               showSelection={showSelection}
               onRetryOCR={onRetryOCR}
+              searchQuery={searchQuery}
             />
           ))}
         </div>
