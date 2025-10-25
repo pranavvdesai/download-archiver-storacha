@@ -3,6 +3,7 @@ self.process = { env: {} };
 import { create } from "@web3-storage/w3up-client";
 import * as DID from "@ipld/dag-ucan/did";
 import * as Delegation from "@ucanto/core/delegation";
+import { syncUploadToSupabase } from "./supabase-sync.js";
 
 let client;
 let spaceDid;
@@ -700,6 +701,7 @@ async function logUpload(uploadData) {
 
     await chrome.storage.local.set({ uploadHistory: newHistory });
     console.log("[DownloadArchiver] Upload logged:", uploadData.filename);
+        await syncUploadToSupabase(uploadData);
   } catch (err) {
     console.error("[DownloadArchiver] Failed to log upload:", err);
   }
