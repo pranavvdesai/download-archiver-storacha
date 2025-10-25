@@ -4,6 +4,7 @@ import { AuthProvider } from './components/AuthProvider';
 import { SignInForm } from './components/SignInForm';
 import { Dashboard } from './components/Dashboard';
 import { Settings } from './pages/Settings';
+import { UploadHistory } from './components/UploadHistory';
 import { useAuth } from './hooks/useAuth';
 import { FormSkeleton } from './components/skeletons';
 
@@ -36,6 +37,14 @@ const AppContent: React.FC = () => {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/upload-history"
+        element={
+          <ProtectedRoute>
+            <UploadHistory />
           </ProtectedRoute>
         }
       />
