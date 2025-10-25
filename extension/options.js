@@ -187,13 +187,20 @@ class RuleEngine {
   const minSizeInput = document.getElementById("minSize");
   const maxSizeInput = document.getElementById("maxSize");
 
+  const supabaseUrlInput = document.getElementById("supabaseUrl");
+  const supabaseKeyInput = document.getElementById("supabaseKey");
+
   const stored = await chrome.storage.local.get([
     "email",
     "spaceDid",
     "rulesV2",
     "rules",
+    "supabaseUrl",
+    "supabaseKey",
   ]);
   if (stored.email) emailInput.value = stored.email;
+  if (stored.supabaseUrl) supabaseUrlInput.value = stored.supabaseUrl;
+  if (stored.supabaseKey) supabaseKeyInput.value = stored.supabaseKey;
 
   // Load or migrate rules
   let rules = stored.rulesV2;
@@ -341,6 +348,12 @@ class RuleEngine {
     };
 
     chrome.storage.local.set({ rulesV2: newRules });
+
+    const supabaseUrl = supabaseUrlInput.value.trim();
+    const supabaseKey = supabaseKeyInput.value.trim();
+    if (supabaseUrl && supabaseKey) {
+      chrome.storage.local.set({ supabaseUrl, supabaseKey });
+    }
 
     chrome.runtime.sendMessage(
       { type: "CONFIG", email, spaceDid: stored.spaceDid || null },

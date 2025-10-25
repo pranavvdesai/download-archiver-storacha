@@ -1,6 +1,6 @@
 import React, { useState }  from "react";
-import { useNavigate } from "react-router-dom";
-import { LogOut, User, Search, Settings } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { LogOut, User, Search, Settings, Clock, Home } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { LogoutModal } from './LogoutModal';
 
@@ -15,16 +15,46 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+
+  const isActive = (path: string) => location.pathname === path;
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">S</span>
+        <div className="flex items-center space-x-8">
+          <div className="flex items-center space-x-4">
+            <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">S</span>
+            </div>
+            <h1 className="text-xl font-bold text-gray-900">Storacha</h1>
           </div>
-          <h1 className="text-xl font-bold text-gray-900">Storacha</h1>
+
+          <nav className="flex items-center space-x-2">
+            <button
+              onClick={() => navigate('/')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isActive('/') 
+                  ? 'bg-red-50 text-red-700' 
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <Home className="w-4 h-4" />
+              Files
+            </button>
+            <button
+              onClick={() => navigate('/upload-history')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isActive('/upload-history') 
+                  ? 'bg-red-50 text-red-700' 
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <Clock className="w-4 h-4" />
+              Upload History
+            </button>
+          </nav>
         </div>
 
         <div className="flex-1 max-w-md mx-8">

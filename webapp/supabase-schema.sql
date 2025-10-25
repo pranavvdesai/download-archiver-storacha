@@ -194,6 +194,25 @@ CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_email);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
 CREATE INDEX IF NOT EXISTS idx_sessions_valid ON sessions(is_valid) WHERE is_valid = true;
 
+CREATE TABLE IF NOT EXISTS upload_history (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_email TEXT NOT NULL REFERENCES users(email) ON DELETE CASCADE,
+  space_id TEXT REFERENCES spaces(space_id) ON DELETE SET NULL,
+  filename TEXT NOT NULL,
+  cid TEXT NOT NULL,
+  url TEXT,
+  size_mb NUMERIC(10, 2) NOT NULL,
+  source TEXT NOT NULL CHECK (source IN ('download', 'context-menu')),
+  timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  metadata JSONB DEFAULT '{}'::jsonb
+);
+
+CREATE INDEX IF NOT EXISTS idx_upload_history_user ON upload_history(user_email);
+CREATE INDEX IF NOT EXISTS idx_upload_history_space ON upload_history(space_id);
+CREATE INDEX IF NOT EXISTS idx_upload_history_source ON upload_history(source);
+CREATE INDEX IF NOT EXISTS idx_upload_history_timestamp ON upload_history(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_upload_history_cid ON upload_history(cid);
+
 -- ============================================
 -- Triggers for updated_at timestamps
 -- ============================================
@@ -233,6 +252,7 @@ ALTER TABLE file_tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE file_metrics_daily ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE upload_history ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow all access to users" ON users FOR ALL USING (true);
 CREATE POLICY "Allow all access to user_settings" ON user_settings FOR ALL USING (true);
@@ -243,6 +263,7 @@ CREATE POLICY "Allow all access to file_tags" ON file_tags FOR ALL USING (true);
 CREATE POLICY "Allow all access to events" ON events FOR ALL USING (true);
 CREATE POLICY "Allow all access to file_metrics_daily" ON file_metrics_daily FOR ALL USING (true);
 CREATE POLICY "Allow all access to sessions" ON sessions FOR ALL USING (true);
+CREATE POLICY "Allow all access to upload_history" ON upload_history FOR ALL USING (true);
 
 
 -- Function to increment download count
@@ -308,3 +329,4 @@ COMMENT ON TABLE file_tags IS 'Tags associated with files';
 COMMENT ON TABLE events IS 'Audit log of user and system events';
 COMMENT ON TABLE file_metrics_daily IS 'Daily aggregated metrics per file';
 COMMENT ON TABLE sessions IS 'User session tracking';
+COMMENT ON TABLE upload_history IS 'Upload history synced from browser extension';

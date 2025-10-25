@@ -353,6 +353,45 @@ export type Database = {
         }
         Relationships: []
       }
+      upload_history: {
+        Row: {
+          id: string
+          user_email: string
+          space_id: string | null
+          filename: string
+          cid: string
+          url: string | null
+          size_mb: number
+          source: 'download' | 'context-menu'
+          timestamp: string
+          metadata: Json | null
+        }
+        Insert: {
+          id?: string
+          user_email: string
+          space_id?: string | null
+          filename: string
+          cid: string
+          url?: string | null
+          size_mb: number
+          source: 'download' | 'context-menu'
+          timestamp?: string
+          metadata?: Json | null
+        }
+        Update: {
+          id?: string
+          user_email?: string
+          space_id?: string | null
+          filename?: string
+          cid?: string
+          url?: string | null
+          size_mb?: number
+          source?: 'download' | 'context-menu'
+          timestamp?: string
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
