@@ -132,6 +132,31 @@ CREATE INDEX IF NOT EXISTS idx_file_tags_tag ON file_tags(tag);
 CREATE INDEX IF NOT EXISTS idx_file_tags_user ON file_tags(added_by_email);
 
 -- ============================================
+-- Table: share_links
+-- ============================================
+CREATE TABLE IF NOT EXISTS share_links (
+  share_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  file_cid TEXT NOT NULL REFERENCES files(cid) ON DELETE CASCADE,
+  created_by_email TEXT NOT NULL REFERENCES users(email) ON DELETE CASCADE,
+  share_token TEXT UNIQUE NOT NULL, 
+  expires_at TIMESTAMP WITH TIME ZONE, 
+  max_downloads INTEGER, 
+  download_count INTEGER DEFAULT 0,
+  is_active BOOLEAN DEFAULT true,
+  password_hash TEXT, 
+  allowed_emails TEXT[], 
+  metadata JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  last_accessed_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Indexes for share_links
+CREATE INDEX IF NOT EXISTS idx_share_links_file ON share_links(file_cid);
+CREATE INDEX IF NOT EXISTS idx_share_links_creator ON share_links(created_by_email);
+CREATE INDEX IF NOT EXISTS idx_share_links_token ON share_links(share_token);
+CREATE INDEX IF NOT EXISTS idx_share_links_active ON share_links(is_active) WHERE is_active = true;
+
+-- ============================================
 -- Table: events
 -- ============================================
 CREATE TABLE IF NOT EXISTS events (
@@ -230,6 +255,7 @@ ALTER TABLE spaces ENABLE ROW LEVEL SECURITY;
 ALTER TABLE space_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE files ENABLE ROW LEVEL SECURITY;
 ALTER TABLE file_tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE share_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE file_metrics_daily ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
@@ -240,6 +266,7 @@ CREATE POLICY "Allow all access to spaces" ON spaces FOR ALL USING (true);
 CREATE POLICY "Allow all access to space_members" ON space_members FOR ALL USING (true);
 CREATE POLICY "Allow all access to files" ON files FOR ALL USING (true);
 CREATE POLICY "Allow all access to file_tags" ON file_tags FOR ALL USING (true);
+CREATE POLICY "Allow all access to share_links" ON share_links FOR ALL USING (true);
 CREATE POLICY "Allow all access to events" ON events FOR ALL USING (true);
 CREATE POLICY "Allow all access to file_metrics_daily" ON file_metrics_daily FOR ALL USING (true);
 CREATE POLICY "Allow all access to sessions" ON sessions FOR ALL USING (true);
@@ -305,6 +332,7 @@ COMMENT ON TABLE spaces IS 'Storacha spaces (storage containers)';
 COMMENT ON TABLE space_members IS 'Space membership and roles';
 COMMENT ON TABLE files IS 'File metadata and OCR information';
 COMMENT ON TABLE file_tags IS 'Tags associated with files';
+COMMENT ON TABLE share_links IS 'Shareable links for files with access controls';
 COMMENT ON TABLE events IS 'Audit log of user and system events';
 COMMENT ON TABLE file_metrics_daily IS 'Daily aggregated metrics per file';
 COMMENT ON TABLE sessions IS 'User session tracking';

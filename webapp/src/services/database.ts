@@ -558,6 +558,311 @@ export const sessionService = {
 };
 
 
+type SpaceMemberRow = Tables['space_members']['Row'];
+type SpaceMemberInsert = Tables['space_members']['Insert'];
+type SpaceMemberUpdate = Tables['space_members']['Update'];
+
+export const spaceMemberService = {
+
+  async addMember(member: SpaceMemberInsert): Promise<SpaceMemberRow> {
+    const { data, error } = await supabase
+      .from('space_members')
+      .insert(member)
+      .select()
+      .single();
+
+    if (error) throw new Error(`Failed to add space member: ${error.message}`);
+    if (!data) throw new Error('No data returned from insert');
+    return data as SpaceMemberRow;
+  },
+
+  async getSpaceMembers(spaceId: string): Promise<SpaceMemberRow[]> {
+    const { data, error } = await supabase
+      .from('space_members')
+      .select('*')
+      .eq('space_id', spaceId)
+      .order('joined_at', { ascending: false });
+
+    if (error) throw new Error(`Failed to get space members: ${error.message}`);
+    return (data as SpaceMemberRow[]) || [];
+  },
+
+  async getMemberRole(spaceId: string, userEmail: string): Promise<string | null> {
+    const { data, error } = await supabase
+      .from('space_members')
+      .select('role')
+      .eq('space_id', spaceId)
+      .eq('user_email', userEmail)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      throw new Error(`Failed to get member role: ${error.message}`);
+    }
+    return data?.role || null;
+  },
+
+  async updateMember(id: string, updates: SpaceMemberUpdate): Promise<SpaceMemberRow> {
+    const { data, error } = await supabase
+      .from('space_members')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw new Error(`Failed to update space member: ${error.message}`);
+    if (!data) throw new Error('No data returned from update');
+    return data as SpaceMemberRow;
+  },
+
+  async removeMember(spaceId: string, userEmail: string): Promise<void> {
+    const { error } = await supabase
+      .from('space_members')
+      .delete()
+      .eq('space_id', spaceId)
+      .eq('user_email', userEmail);
+
+    if (error) throw new Error(`Failed to remove space member: ${error.message}`);
+  },
+
+  async hasPermission(spaceId: string, userEmail: string, permission: string): Promise<boolean> {
+    const { data, error } = await supabase
+      .from('space_members')
+      .select('role, permissions')
+      .eq('space_id', spaceId)
+      .eq('user_email', userEmail)
+      .single();
+
+    if (error || !data) return false;
+
+    if (data.role === 'owner' || data.role === 'admin') return true;
+
+    const permissions = data.permissions as any;
+    return permissions?.[permission] === true;
+  },
+};
+
+type ShareLinkRow = Tables['share_links']['Row'];
+type ShareLinkInsert = Tables['share_links']['Insert'];
+type ShareLinkUpdate = Tables['share_links']['Update'];
+
+export const shareLinkService = {
+    async createShareLink(shareLink: ShareLinkInsert): Promise<ShareLinkRow> {
+    const { data, error } = await supabase
+      .from('share_links')
+      .insert(shareLink)
+      .select()
+      .single();
+
+    if (error) throw new Error(`Failed to create share link: ${error.message}`);
+    if (!data) throw new Error('No data returned from insert');
+    return data as ShareLinkRow;
+  },
+
+  async getShareLinkByToken(token: string): Promise<ShareLinkRow | null> {
+    const { data, error } = await supabase
+      .from('share_links')
+      .select('*')
+      .eq('share_token', token)
+      .eq('is_active', true)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      throw new Error(`Failed to get share link: ${error.message}`);
+    }
+    return data as ShareLinkRow | null;
+  },
+
+  async getFileShareLinks(fileCid: string): Promise<ShareLinkRow[]> {
+    const { data, error } = await supabase
+      .from('share_links')
+      .select('*')
+      .eq('file_cid', fileCid)
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error(`Failed to get file share links: ${error.message}`);
+    return (data as ShareLinkRow[]) || [];
+  },
+
+  async getUserShareLinks(userEmail: string): Promise<ShareLinkRow[]> {
+    const { data, error } = await supabase
+      .from('share_links')
+      .select('*')
+      .eq('created_by_email', userEmail)
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error(`Failed to get user share links: ${error.message}`);
+    return (data as ShareLinkRow[]) || [];
+  },
+
+  async updateShareLink(shareId: string, updates: ShareLinkUpdate): Promise<ShareLinkRow> {
+    const { data, error } = await supabase
+      .from('share_links')
+      .update(updates)
+      .eq('share_id', shareId)
+      .select()
+      .single();
+
+    if (error) throw new Error(`Failed to update share link: ${error.message}`);
+    if (!data) throw new Error('No data returned from update');
+    return data as ShareLinkRow;
+  },
+
+  async incrementShareDownload(shareId: string): Promise<void> {
+    const shareLink = await supabase
+      .from('share_links')
+      .select('download_count')
+      .eq('share_id', shareId)
+      .single();
+
+    if (shareLink.data) {
+      await supabase
+        .from('share_links')
+        .update({
+          download_count: (shareLink.data.download_count || 0) + 1,
+          last_accessed_at: new Date().toISOString(),
+        })
+        .eq('share_id', shareId);
+    }
+  },
+
+  async deactivateShareLink(shareId: string): Promise<void> {
+    const { error } = await supabase
+      .from('share_links')
+      .update({ is_active: false })
+      .eq('share_id', shareId);
+
+    if (error) throw new Error(`Failed to deactivate share link: ${error.message}`);
+  },
+
+  async deleteShareLink(shareId: string): Promise<void> {
+    const { error } = await supabase
+      .from('share_links')
+      .delete()
+      .eq('share_id', shareId);
+
+    if (error) throw new Error(`Failed to delete share link: ${error.message}`);
+  },
+
+  async validateShareLink(token: string, userEmail?: string): Promise<{
+    valid: boolean;
+    reason?: string;
+    shareLink?: ShareLinkRow;
+  }> {
+    const shareLink = await shareLinkService.getShareLinkByToken(token);
+
+    if (!shareLink) {
+      return { valid: false, reason: 'Share link not found or inactive' };
+    }
+
+    if (shareLink.expires_at && new Date(shareLink.expires_at) < new Date()) {
+      return { valid: false, reason: 'Share link has expired' };
+    }
+
+    if (shareLink.max_downloads && shareLink.download_count >= shareLink.max_downloads) {
+      return { valid: false, reason: 'Download limit reached' };
+    }
+
+    if (shareLink.allowed_emails && shareLink.allowed_emails.length > 0) {
+      if (!userEmail || !shareLink.allowed_emails.includes(userEmail)) {
+        return { valid: false, reason: 'Access restricted to specific users' };
+      }
+    }
+
+    return { valid: true, shareLink };
+  },
+};
+
+type FileMetricRow = Tables['file_metrics_daily']['Row'];
+
+export const fileMetricsService = {
+  async trackView(fileCid: string, date?: Date): Promise<void> {
+    const metricDate = date || new Date();
+    const dateStr = metricDate.toISOString().split('T')[0];
+
+    const { error } = await supabase.rpc('upsert_daily_metric', {
+      file_cid_param: fileCid,
+      metric_date_param: dateStr,
+      views_param: 1,
+    } as any);
+
+    if (error) {
+      console.error('Failed to track view:', error);
+    }
+  },
+
+  async trackDownload(fileCid: string, bandwidthBytes?: number, date?: Date): Promise<void> {
+    const metricDate = date || new Date();
+    const dateStr = metricDate.toISOString().split('T')[0];
+
+    const { error } = await supabase.rpc('upsert_daily_metric', {
+      file_cid_param: fileCid,
+      metric_date_param: dateStr,
+      downloads_param: 1,
+      bandwidth_param: bandwidthBytes || 0,
+    } as any);
+
+    if (error) {
+      console.error('Failed to track download:', error);
+    }
+  },
+
+  async trackShare(fileCid: string, date?: Date): Promise<void> {
+    const metricDate = date || new Date();
+    const dateStr = metricDate.toISOString().split('T')[0];
+
+    const { error } = await supabase.rpc('upsert_daily_metric', {
+      file_cid_param: fileCid,
+      metric_date_param: dateStr,
+      shares_param: 1,
+    } as any);
+
+    if (error) {
+      console.error('Failed to track share:', error);
+    }
+  },
+
+  async getFileMetrics(fileCid: string, days = 30): Promise<FileMetricRow[]> {
+    const fromDate = new Date();
+    fromDate.setDate(fromDate.getDate() - days);
+
+    const { data, error } = await supabase
+      .from('file_metrics_daily')
+      .select('*')
+      .eq('file_cid', fileCid)
+      .gte('metric_date', fromDate.toISOString().split('T')[0])
+      .order('metric_date', { ascending: false });
+
+    if (error) throw new Error(`Failed to get file metrics: ${error.message}`);
+    return (data as FileMetricRow[]) || [];
+  },
+
+  async getFileMetricsSummary(fileCid: string): Promise<{
+    totalViews: number;
+    totalDownloads: number;
+    totalShares: number;
+    totalBandwidth: number;
+  }> {
+    const { data, error } = await supabase
+      .from('file_metrics_daily')
+      .select('downloads, views, shares, bandwidth_bytes')
+      .eq('file_cid', fileCid);
+
+    if (error) throw new Error(`Failed to get metrics summary: ${error.message}`);
+
+    const summary = (data || []).reduce(
+      (acc, metric) => ({
+        totalViews: acc.totalViews + (metric.views || 0),
+        totalDownloads: acc.totalDownloads + (metric.downloads || 0),
+        totalShares: acc.totalShares + (metric.shares || 0),
+        totalBandwidth: acc.totalBandwidth + (metric.bandwidth_bytes || 0),
+      }),
+      { totalViews: 0, totalDownloads: 0, totalShares: 0, totalBandwidth: 0 }
+    );
+
+    return summary;
+  },
+};
+
 export function getFileKind(mimeType: string): string {
   if (mimeType.startsWith('image/')) return 'image';
   if (mimeType.startsWith('video/')) return 'video';

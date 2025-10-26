@@ -245,6 +245,54 @@ export type Database = {
         }
         Relationships: []
       }
+      share_links: {
+        Row: {
+          share_id: string
+          file_cid: string
+          created_by_email: string
+          share_token: string
+          expires_at: string | null
+          max_downloads: number | null
+          download_count: number
+          is_active: boolean
+          password_hash: string | null
+          allowed_emails: string[] | null
+          metadata: Json | null
+          created_at: string
+          last_accessed_at: string | null
+        }
+        Insert: {
+          share_id?: string
+          file_cid: string
+          created_by_email: string
+          share_token: string
+          expires_at?: string | null
+          max_downloads?: number | null
+          download_count?: number
+          is_active?: boolean
+          password_hash?: string | null
+          allowed_emails?: string[] | null
+          metadata?: Json | null
+          created_at?: string
+          last_accessed_at?: string | null
+        }
+        Update: {
+          share_id?: string
+          file_cid?: string
+          created_by_email?: string
+          share_token?: string
+          expires_at?: string | null
+          max_downloads?: number | null
+          download_count?: number
+          is_active?: boolean
+          password_hash?: string | null
+          allowed_emails?: string[] | null
+          metadata?: Json | null
+          created_at?: string
+          last_accessed_at?: string | null
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           event_id: string
