@@ -1,6 +1,6 @@
 import React, { useState }  from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, User, Search, Settings } from "lucide-react";
+import { LogOut, User, Search, Settings, TrendingUp } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { LogoutModal } from './LogoutModal';
 
@@ -57,6 +57,14 @@ export const Header: React.FC<HeaderProps> = ({
               {user?.name}
             </span>
           </div>
+
+          <button
+            onClick={() => navigate('/analytics')}
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
+            title="Analytics"
+          >
+            <TrendingUp className="w-5 h-5" />
+          </button>
 
           <button
             onClick={() => navigate('/settings')}
