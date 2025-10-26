@@ -12,10 +12,12 @@ import {
   RefreshCw,
   AlertCircle,
   Clock,
+  Share2,
 } from 'lucide-react';
 import { StorachaFile } from '../types';
 import { formatFileSize, formatDate, getFileTypeIcon, copyToClipboard } from '../utils/fileUtils';
 import { decodeCidToString } from '../utils/decodeCidToString';
+import { ShareModal } from './ShareModal';
 
 interface FileCardProps {
   file: StorachaFile;
@@ -76,6 +78,7 @@ export const FileCard: React.FC<FileCardProps> = ({
   const [isAddingTag, setIsAddingTag] = useState(false);
   const [newTag, setNewTag] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const cidStr = decodeCidToString(file.cid);
 
@@ -204,6 +207,16 @@ export const FileCard: React.FC<FileCardProps> = ({
                     <Download className="w-4 h-4" />
                     <span>Download</span>
                   </button>
+                  <button
+                    onClick={() => {
+                      setShowShareModal(true);
+                      setShowActions(false);
+                    }}
+                    className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span>Share</span>
+                  </button>
                   {file.ocrStatus === "failed" && onRetryOCR && (
                     <button
                       onClick={() => onRetryOCR(file.id)}
@@ -296,6 +309,13 @@ export const FileCard: React.FC<FileCardProps> = ({
             >
               <Download className="w-4 h-4" />
             </button>
+            <button
+              onClick={() => setShowShareModal(true)}
+              className="p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-all duration-200"
+              title="Share"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
@@ -367,6 +387,15 @@ export const FileCard: React.FC<FileCardProps> = ({
           )}
         </div>
       </div>
+
+      {showShareModal && (
+        <ShareModal
+          fileId={file.id}
+          fileCid={cidStr}
+          fileName={file.name || cidStr}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
     </div>
   );
 };
