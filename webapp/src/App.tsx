@@ -4,6 +4,7 @@ import { AuthProvider } from './components/AuthProvider';
 import { SignInForm } from './components/SignInForm';
 import { Dashboard } from './components/Dashboard';
 import { Settings } from './pages/Settings';
+import { Analytics } from './pages/Analytics';
 import { useAuth } from './hooks/useAuth';
 import { FormSkeleton } from './components/skeletons';
 
@@ -44,6 +45,14 @@ const AppContent: React.FC = () => {
         element={
           <ProtectedRoute>
             <Settings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/analytics"
+        element={
+          <ProtectedRoute>
+            <Analytics />
           </ProtectedRoute>
         }
       />

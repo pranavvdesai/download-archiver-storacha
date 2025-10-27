@@ -558,6 +558,160 @@ export const sessionService = {
 };
 
 
+export const analyticsService = {
+  async getFileMetrics(fileCid: string, startDate?: Date, endDate?: Date) {
+    let query = supabase
+      .from('file_metrics_daily')
+      .select('*')
+      .eq('file_cid', fileCid)
+      .order('me`tric_date', { ascending: true });
+
+    if (startDate) {
+      query = query.gte('metric_date', startDate.toISOString().split('T')[0]);
+    }
+    if (endDate) {
+      query = query.lte('metric_date', endDate.toISOString().split('T')[0]);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw new Error(`Failed to get file metrics: ${error.message}`);
+    return (data as Tables['file_metrics_daily']['Row'][]) || [];
+  },
+
+  async getStorageOverTime(spaceId: string, days = 30) {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const { data, error } = await supabase
+      .from('files')
+      .select('uploaded_at, size_bytes')
+      .eq('space_id', spaceId)
+      .is('deleted_at', null)
+      .gte('uploaded_at', startDate.toISOString())
+      .order('uploaded_at', { ascending: true });
+
+    if (error) throw new Error(`Failed to get storage over time: ${error.message}`);
+    return (data as Array<{ uploaded_at: string; size_bytes: number }>) || [];
+  },
+
+  async getDownloadTrends(spaceId: string, days = 30) {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const { data: files, error: filesError } = await supabase
+      .from('files')
+      .select('cid')
+      .eq('space_id', spaceId)
+      .is('deleted_at', null);
+
+    if (filesError) throw new Error(`Failed to get files: ${filesError.message}`);
+    
+    const fileCids = (files || []).map(f => f.cid);
+    
+    if (fileCids.length === 0) {
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .from('file_metrics_daily')
+      .select('metric_date, downloads, views, shares')
+      .in('file_cid', fileCids)
+      .gte('metric_date', startDate.toISOString().split('T')[0])
+      .order('metric_date', { ascending: true });
+
+    if (error) throw new Error(`Failed to get download trends: ${error.message}`);
+    return (data as Array<{ metric_date: string; downloads: number; views: number; shares: number }>) || [];
+  },
+
+  async getMostPopularFiles(spaceId: string, limit = 10) {
+    const { data, error } = await supabase
+      .from('files')
+      .select('cid, name, download_count, size_bytes, uploaded_at')
+      .eq('space_id', spaceId)
+      .is('deleted_at', null)
+      .order('download_count', { ascending: false })
+      .limit(limit);
+
+    if (error) throw new Error(`Failed to get popular files: ${error.message}`);
+    return (data as Array<FileRow>) || [];
+  },
+
+  async getActivityTimeline(spaceId: string, limit = 50) {
+    const { data, error } = await supabase
+      .from('events')
+      .select('event_id, event_type, user_email, file_cid, created_at, payload')
+      .eq('space_id', spaceId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw new Error(`Failed to get activity timeline: ${error.message}`);
+    return (data as Tables['events']['Row'][]) || [];
+  },
+
+  async getSpaceStats(spaceId: string) {
+    const { data: files, error: filesError } = await supabase
+      .from('files')
+      .select('cid, size_bytes, download_count, file_kind')
+      .eq('space_id', spaceId)
+      .is('deleted_at', null);
+
+    if (filesError) throw new Error(`Failed to get space stats: ${filesError.message}`);
+
+    const fileData = files || [];
+    const totalFiles = fileData.length;
+    const totalSize = fileData.reduce((sum, f) => sum + (f.size_bytes || 0), 0);
+    const totalDownloads = fileData.reduce((sum, f) => sum + (f.download_count || 0), 0);
+
+    const filesByKind = fileData.reduce((acc, f) => {
+      acc[f.file_kind || 'other'] = (acc[f.file_kind || 'other'] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return {
+      totalFiles,
+      totalSize,
+      totalDownloads,
+      filesByKind,
+    };
+  },
+
+  async recordDailyMetric(
+    fileCid: string,
+    metricDate: Date,
+    updates: {
+      downloads?: number;
+      views?: number;
+      shares?: number;
+      bandwidth_bytes?: number;
+    }
+  ) {
+    const dateStr = metricDate.toISOString().split('T')[0];
+
+    const { error } = await supabase.rpc('upsert_daily_metric', {
+      file_cid_param: fileCid,
+      metric_date_param: dateStr,
+      downloads_param: updates.downloads || 0,
+      views_param: updates.views || 0,
+      shares_param: updates.shares || 0,
+      bandwidth_param: updates.bandwidth_bytes || 0,
+    } as any);
+
+    if (error) {
+      const { error: upsertError } = await supabase
+        .from('file_metrics_daily')
+        .upsert({
+          file_cid: fileCid,
+          metric_date: dateStr,
+          ...updates,
+        });
+
+      if (upsertError) throw new Error(`Failed to record metric: ${upsertError.message}`);
+    }
+  },
+};
+
+
 export function getFileKind(mimeType: string): string {
   if (mimeType.startsWith('image/')) return 'image';
   if (mimeType.startsWith('video/')) return 'video';
