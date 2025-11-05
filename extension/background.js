@@ -583,34 +583,15 @@ chrome.downloads.onChanged.addListener(async (delta) => {
       `[DownloadArchiver] Processing ${item.filename}: ${evaluation.reason}`
     );
 
-    const response = await fetch(item.url);
-    const blob = await response.blob();
-    const file = new File([blob], item.filename);
-
-    console.log("[DownloadArchiver] Uploading:", item.filename);
-    const cid = await client.uploadFile(file);
-    console.log("[DownloadArchiver] Uploaded →", cid.toString());
-    console.log(
-      "[DownloadArchiver] File uploaded →",
-      `https://${cid}.ipfs.w3s.link`
-    );
-
-    chrome.notifications.create({
+    const notificationId = `upload-${Date.now()}`;
+    chrome.notifications.create(notificationId, {
       type: "basic",
       iconUrl: chrome.runtime.getURL("icons/48.png"),
       title: "DownloadArchiver",
-      message: `${item.filename} → https://${cid}.ipfs.w3s.link`,
+      message: `Starting upload for ${item.filename}...`,
     });
 
-    // Log the upload
-    await logUpload({
-      filename: item.filename,
-      cid: cid.toString(),
-      url: item.url,
-      size: fileSizeMB,
-      timestamp: new Date().toISOString(),
-      source: "download",
-    });
+    await uploadFromUrl(item.url, notificationId);
   } catch (err) {
     console.error("[DownloadArchiver] Error uploading download:", err);
   }
