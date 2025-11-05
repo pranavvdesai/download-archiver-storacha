@@ -234,3 +234,10 @@ Current UX targets a single “download-vault” space. Multi-space & cross-prof
 Use the **CID** from the upload confirmation and retrieve via gateways or your preferred tools.
 
 ---
+
+### Recent Improvements
+
+- **De-duplicated Rule Engine Logic**: The `RuleEngine` class, previously duplicated in `background.js` and `options.js`, has been extracted into a standalone `rule-engine.js` module. This centralization improves maintainability, as updates to the rule logic now only need to be made in one place.
+
+- **Enhanced Security in `popup.js`**: The popup's UI is now built using `document.createElement` and `textContent` instead of `innerHTML`. This is a security best practice that mitigates the risk of Cross-Site Scripting (XSS) attacks by ensuring that all data is treated as plain text.
+
