@@ -2,6 +2,104 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  body {
+    overscroll-behavior-y: contain;
+    touch-action: manipulation;
+  }
+  
+  button, input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  button, [role="button"] {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid #dc2626;
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .touch-card {
+    @apply transition-transform duration-150 ease-out;
+  }
+  
+  .touch-card:active {
+    @apply scale-95;
+  }
+  
+  .mobile-input {
+    @apply text-base; 
+  }
+  
+  .swipe-container {
+    @apply relative overflow-hidden;
+  }
+  
+  .mobile-nav-item {
+    @apply flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-100 active:bg-gray-200 transition-colors;
+  }
+  
+  .mobile-file-card {
+    @apply bg-white border border-gray-200 rounded-lg shadow-sm active:shadow-md transition-all duration-150;
+  }
+}
+
+@layer utilities {
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  .touch-spacing {
+    @apply p-4;
+  }
+  
+  .mobile-text-sm {
+    @apply text-sm leading-5;
+  }
+  
+  .mobile-text-base {
+    @apply text-base leading-6;
+  }
+  
+  .mobile-text-lg {
+    @apply text-lg leading-7;
+  }
+}
+
 @keyframes shimmer {
   0% {
     background-position: -200px 0;
