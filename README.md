@@ -13,6 +13,7 @@ A Chrome Extension that automatically backs up your downloads into **your** Stor
 - [Troubleshooting](#troubleshooting)
 - [Contribution Guidelines](#contribution-guidelines)
 - [FAQ](#faq)
+- [Fixes](#fixes)
 
 ---
 
@@ -234,3 +235,27 @@ Current UX targets a single “download-vault” space. Multi-space & cross-prof
 Use the **CID** from the upload confirmation and retrieve via gateways or your preferred tools.
 
 ---
+
+## Fixes
+
+### Refactored Download Handling in `background.js`
+
+The `chrome.downloads.onChanged` event listener was updated to improve reliability and code consistency.
+
+*   **Issue:** The original code contained a separate, less robust implementation for handling file uploads triggered by completed browser downloads. This duplicated logic already present in the `uploadFromUrl` function, which is used for context-menu uploads.
+
+*   **Fix:** The redundant code was removed. The listener now calls the existing `uploadFromUrl` function to process the downloaded file.
+
+*   **Benefits:**
+    *   **Code Reusability:** Eliminates duplicated code, making the extension easier to maintain.
+    *   **Consistent Behavior:** Ensures that all uploads, whether from downloads or the context menu, use the same robust logic, including notifications and error handling.
+    *   **Improved Reliability:** Leverages the more comprehensive validation and error-checking built into the `uploadFromUrl` function.
+
+---
+
+### Recent Improvements
+
+- **De-duplicated Rule Engine Logic**: The `RuleEngine` class, previously duplicated in `background.js` and `options.js`, has been extracted into a standalone `rule-engine.js` module. This centralization improves maintainability, as updates to the rule logic now only need to be made in one place.
+
+- **Enhanced Security in `popup.js`**: The popup's UI is now built using `document.createElement` and `textContent` instead of `innerHTML`. This is a security best practice that mitigates the risk of Cross-Site Scripting (XSS) attacks by ensuring that all data is treated as plain text.
+
