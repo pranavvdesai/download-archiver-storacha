@@ -4,7 +4,8 @@ A Chrome Extension that automatically backs up your downloads into **your** Stor
 
 **Product spec / vision:** [Storacha Downloads Archiver — Product Documentation (Draft)](https://docs.google.com/document/d/11_DkDFZ9gTSH6BoDHQRNIx-CNi1Mdkc5anoFRrbYB_o/edit?usp=sharing)
 
-> Demo: https://youtu.be/Ep2AEDxejtI
+> Demo MVP: https://youtu.be/Ep2AEDxejtI
+> Phase 1: https://youtu.be/PPe9y9LZshU
 
 ## Table of Contents
 
