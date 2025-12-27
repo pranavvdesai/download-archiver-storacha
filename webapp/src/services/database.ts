@@ -34,6 +34,58 @@ export const userService = {
     return data as UserRow;
   },
 
+  async searchFiles(searchQuery: string, spaceId?: string): Promise<FileRow[]> {
+    const like = `%${searchQuery}%`;
+
+    let ocrQuery = supabase
+      .from('files')
+      .select('*')
+      .textSearch('ocr_text', searchQuery, { type: 'websearch', config: 'english' })
+      .is('deleted_at', null);
+    if (spaceId) ocrQuery = ocrQuery.eq('space_id', spaceId);
+    const { data: ocrData, error: ocrError } = await ocrQuery;
+    if (ocrError) throw new Error(`Failed OCR search: ${ocrError.message}`);
+
+    let nameQuery = supabase
+      .from('files')
+      .select('*')
+      .ilike('name', like)
+      .is('deleted_at', null);
+    if (spaceId) nameQuery = nameQuery.eq('space_id', spaceId);
+    const { data: nameData, error: nameError } = await nameQuery;
+    if (nameError) throw new Error(`Failed name search: ${nameError.message}`);
+
+    let tagCidQuery = supabase
+      .from('file_tags')
+      .select('file_cid, files!inner(space_id)')
+      .ilike('tag', like);
+    if (spaceId) tagCidQuery = tagCidQuery.eq('files.space_id', spaceId);
+    const { data: tagCidData, error: tagCidError } = await tagCidQuery as unknown as { data: Array<{ file_cid: string }>, error: any };
+    if (tagCidError) throw new Error(`Failed tag search: ${tagCidError.message}`);
+    const tagCids = Array.from(new Set((tagCidData || []).map(r => r.file_cid)));
+
+    let tagFilesData: FileRow[] = [];
+    if (tagCids.length > 0) {
+      let tagFilesQuery = supabase
+        .from('files')
+        .select('*')
+        .in('cid', tagCids)
+        .is('deleted_at', null);
+      if (spaceId) tagFilesQuery = tagFilesQuery.eq('space_id', spaceId);
+      const { data, error } = await tagFilesQuery;
+      if (error) throw new Error(`Failed tag files fetch: ${error.message}`);
+      tagFilesData = (data as FileRow[]) || [];
+    }
+
+    const byCid = new Map<string, FileRow>();
+    for (const list of [ocrData || [], nameData || [], tagFilesData]) {
+      for (const f of list as FileRow[]) byCid.set(f.cid, f);
+    }
+    return Array.from(byCid.values());
+  },
+
+  
+
   /**
    * Get user by email
    */
@@ -351,6 +403,11 @@ export const fileService = {
 
     if (error) throw new Error(`Failed to search files: ${error.message}`);
     return (data as FileRow[]) || [];
+  },
+
+
+  async searchFiles(searchQuery: string, spaceId?: string): Promise<FileRow[]> {
+    return userService.searchFiles(searchQuery, spaceId);
   },
 
   /**

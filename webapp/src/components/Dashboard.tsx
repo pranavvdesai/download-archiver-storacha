@@ -169,24 +169,45 @@ export const Dashboard: React.FC = () => {
     listFiles();
   }, []);
 
-  const filteredFiles = useMemo(() => {
-    return files.filter(file => {
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        const cidStr = decodeCidToString(file.cid).toLowerCase();
-        const ocrText = file.ocrText?.toLowerCase() || '';
-        const extractedText = file.extractedText?.toLowerCase() || '';
-
-        const nameMatch = file.name.toLowerCase().includes(searchLower);
-        const cidMatch = cidStr.includes(searchLower);
-        const ocrTextMatch = ocrText.includes(searchLower);
-        const extractedTextMatch = extractedText.includes(searchLower);
-
-        return nameMatch || cidMatch || ocrTextMatch || extractedTextMatch;
+  useEffect(() => {
+    const q = filters.search.trim();
+    const handle = setTimeout(async () => {
+      if (!q) {
+        // reset to full list
+        listFiles();
+        return;
       }
-      return true;
+      setIsLoading(true);
+      try {
+        const results = await fileService.searchFiles(q, user?.spaceDid);
+        setFiles(results as any);
+      } catch (err) {
+        console.error('Search failed:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(handle);
+  }, [filters.search, user?.spaceDid]);
+
+  const filteredFiles = useMemo(() => {
+    const q = filters.search.trim().toLowerCase();
+    if (q) {
+      return files;
+    }
+    return files.filter(file => {
+      if (!q) return true;
+      const cidStr = decodeCidToString(file.cid).toLowerCase();
+      const ocrText = file.ocrText?.toLowerCase() || '';
+      const extractedText = file.extractedText?.toLowerCase() || '';
+      const nameMatch = (file.name || '').toLowerCase().includes(q);
+      const cidMatch = cidStr.includes(q);
+      const ocrTextMatch = ocrText.includes(q);
+      const extractedTextMatch = extractedText.includes(q);
+      return nameMatch || cidMatch || ocrTextMatch || extractedTextMatch;
     });
-  }, [files, filters]);
+  }, [files, filters.search]);
 
   const handleSearchChange = (search: string) => {
     setFilters({ ...filters, search: search.trim() });
@@ -335,18 +356,21 @@ export const Dashboard: React.FC = () => {
               </div>
             )}
 
-            <FileGrid
-              files={filteredFiles}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-              onAddTag={handleAddTag}
-              onRemoveTag={handleRemoveTag}
-              isLoading={isLoading}
-              selectedFiles={selectedFiles}
-              onSelectionChange={handleSelectionChange}
-              showSelection={true}
-              onRetryOCR={handleRetryOCR}
-            />
+            <div className="hidden lg:block">
+              <FileGrid
+                files={filteredFiles}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                onAddTag={handleAddTag}
+                onRemoveTag={handleRemoveTag}
+                isLoading={isLoading}
+                selectedFiles={selectedFiles}
+                onSelectionChange={handleSelectionChange}
+                showSelection={true}
+                onRetryOCR={handleRetryOCR}
+                searchQuery={filters.search}
+              />
+            </div>
           </div>
         </main>
       </div>
